@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120" width="100%" height="100%">
+  <defs>
+    <linearGradient id="gradTeal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00E5FF"/>
+      <stop offset="50%" stop-color="#00B4D8"/>
+      <stop offset="100%" stop-color="#0077B6"/>
+    </linearGradient>
+    <linearGradient id="gradOrange" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF8C42"/>
+      <stop offset="50%" stop-color="#FF6B35"/>
+      <stop offset="100%" stop-color="#E85D04"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background (transparent for overlay use, or use #0B1120 for dark bg) -->
+  <!-- <rect width="400" height="120" fill="#0B1120"/> -->
+
+  <!-- Logo Icon: QR Tag + Scan Beam -->
+  <g transform="translate(20, 20)">
+    <!-- Outer hexagon frame -->
+    <path d="M 40 5 L 68 20 L 68 52 L 40 67 L 12 52 L 12 20 Z" 
+          fill="none" stroke="url(#gradTeal)" stroke-width="2" opacity="0.4"/>
+    <path d="M 40 12 L 62 24 L 62 48 L 40 60 L 18 48 L 18 24 Z" 
+          fill="none" stroke="url(#gradTeal)" stroke-width="1.5" opacity="0.6"/>
+
+    <!-- QR Code stylized -->
+    <g transform="translate(26, 18)">
+      <!-- Corner markers -->
+      <rect x="0" y="0" width="9" height="9" rx="2" fill="url(#gradTeal)"/>
+      <rect x="2" y="2" width="5" height="5" rx="1" fill="#0B1120"/>
+
+      <rect x="26" y="0" width="9" height="9" rx="2" fill="url(#gradTeal)"/>
+      <rect x="28" y="2" width="5" height="5" rx="1" fill="#0B1120"/>
+
+      <rect x="0" y="26" width="9" height="9" rx="2" fill="url(#gradTeal)"/>
+      <rect x="2" y="28" width="5" height="5" rx="1" fill="#0B1120"/>
+
+      <!-- Data modules -->
+      <rect x="11" y="2" width="4" height="4" rx="0.5" fill="url(#gradTeal)" opacity="0.8"/>
+      <rect x="17" y="2" width="4" height="4" rx="0.5" fill="url(#gradTeal)" opacity="0.5"/>
+      <rect x="11" y="8" width="4" height="4" rx="0.5" fill="url(#gradTeal)" opacity="0.6"/>
+      <rect x="17" y="8" width="4" height="4" rx="0.5" fill="url(#gradTeal)" opacity="0.9"/>
+
+      <rect x="2" y="11" width="4" height="4" rx="0.5" fill="url(#gradTeal)" opacity="0.7"/>
+      <rect x="8" y="11" width="4" height="4" rx="0.5" fill="url(#gradTeal)" opacity="0.4"/>
+      <rect x="14" y="11" width="4" height="4" rx="0.5" fill="url(#gradTeal)" opacity="0.8"/>
+
+      <rect x="2" y="17" width="4" height="4" rx="0.5" fill="url(#gradTeal)" opacity="0.5"/>
+      <rect x="8" y="17" width="4" height="4" rx="0.5" fill="url(#gradTeal)" opacity="0.9"/>
+      <rect x="14" y="17" width="4" height="4" rx="0.5" fill="url(#gradTeal)" opacity="0.6"/>
+
+      <rect x="11" y="28" width="4" height="4" rx="0.5" fill="url(#gradTeal)" opacity="0.7"/>
+      <rect x="17" y="28" width="4" height="4" rx="0.5" fill="url(#gradTeal)" opacity="0.5"/>
+      <rect x="23" y="28" width="4" height="4" rx="0.5" fill="url(#gradTeal)" opacity="0.8"/>
+
+      <rect x="28" y="11" width="4" height="4" rx="0.5" fill="url(#gradTeal)" opacity="0.6"/>
+      <rect x="28" y="17" width="4" height="4" rx="0.5" fill="url(#gradTeal)" opacity="0.4"/>
+      <rect x="28" y="23" width="4" height="4" rx="0.5" fill="url(#gradTeal)" opacity="0.9"/>
+      <rect x="28" y="28" width="4" height="4" rx="0.5" fill="url(#gradTeal)" opacity="0.5"/>
+
+      <!-- Center dot (orange accent) -->
+      <circle cx="17.5" cy="17.5" r="2.5" fill="url(#gradOrange)" filter="url(#glow)"/>
+    </g>
+
+    <!-- Scan beam -->
+    <line x1="12" y1="50" x2="68" y2="50" stroke="url(#gradTeal)" stroke-width="1.5" opacity="0.8" filter="url(#glow)"/>
+    <line x1="12" y1="50" x2="68" y2="50" stroke="#00E5FF" stroke-width="0.5" opacity="1"/>
+
+    <!-- Signal waves -->
+    <path d="M 72 38 Q 80 33, 88 38" fill="none" stroke="url(#gradTeal)" stroke-width="1" opacity="0.5"/>
+    <path d="M 74 50 Q 82 45, 90 50" fill="none" stroke="url(#gradTeal)" stroke-width="1" opacity="0.3"/>
+    <path d="M 72 62 Q 80 67, 88 62" fill="none" stroke="url(#gradTeal)" stroke-width="1" opacity="0.5"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="110" y="58" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" 
+        font-size="42" font-weight="800" fill="#F8F9FA" letter-spacing="-1">Smart</text>
+  <text x="230" y="58" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" 
+        font-size="42" font-weight="800" fill="url(#gradTeal)" letter-spacing="-1">Tags</text>
+
+  <!-- Tagline -->
+  <text x="112" y="78" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" 
+        font-size="10" font-weight="600" fill="#94A3B8" letter-spacing="2">ASSET INTELLIGENCE PLATFORM</text>
+</svg>

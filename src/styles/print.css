@@ -1,0 +1,27 @@
+@media print {
+    @page {
+        size: A4;
+        margin: 0;
+      }
+  body * {
+    visibility: hidden;
+    margin: 0
+  }
+  
+  .qr-sheets, .qr-sheets * {
+    visibility: visible;
+  }
+  
+  .qr-sheets {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 210mm;
+    height: 297mm;
+  }
+  
+  button {
+    display: none !important;
+  }
+}
+
