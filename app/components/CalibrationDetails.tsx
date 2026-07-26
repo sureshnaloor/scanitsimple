@@ -954,7 +954,7 @@ export default function CalibrationDetails({ currentCalibration, calibrationHist
                 >
                   <option value="" className={theme === 'glassmorphic' ? 'bg-[#1a2332]' : ''}>Select Company</option>
                   {calibrationCompanies.map(company => (
-                    <option key={company._id} value={company.name} className={theme === 'glassmorphic' ? 'bg-[#1a2332]' : ''}>
+                    <option key={company._id} value={company._id} className={theme === 'glassmorphic' ? 'bg-[#1a2332]' : ''}>
                       {company.name}
                     </option>
                   ))}
@@ -1106,7 +1106,7 @@ export default function CalibrationDetails({ currentCalibration, calibrationHist
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className={`block text-xs font-medium ${fieldStyles.label}`}>Calibrated By</label>
-                    <div className={`text-sm ${fieldStyles.text}`}>{record.calibratedby}</div>
+                     <div className={`text-sm ${fieldStyles.text}`}>{(() => { const company = calibrationCompanies.find(c => c._id === record.calibratedby); return company ? company.name : record.calibratedby; })()}</div>
                   </div>
 
                   <div>
@@ -1566,7 +1566,7 @@ function NewCalibrationFormModal({ isOpen, onClose, onSave, assetnumber }: NewCa
                 >
                   <option value="">Select Company</option>
                   {calibrationCompanies.map(company => (
-                    <option key={company._id} value={company.name}>
+                    <option key={company._id} value={company._id}>
                       {company.name}
                     </option>
                   ))}

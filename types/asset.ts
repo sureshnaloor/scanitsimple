@@ -67,7 +67,10 @@ export interface Calibration {
   /** Optional idle window when calibration is Required — equipment not expected to be calibrated during this range */
   idlePeriodFrom?: Date | string | null;
   idlePeriodTo?: Date | string | null;
-  calibratedby: string;
+  /**
+   * ID of the Calibration Company that performed the calibration.
+   */
+  calibratedby: string; // stores CalibrationCompany _id
   calibrationdate: Date | null;
   calibrationtodate: Date | null;
   calibrationpo?: string;

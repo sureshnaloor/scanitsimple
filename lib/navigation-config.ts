@@ -167,6 +167,10 @@ export const subLinksMap: Record<NavigationSection, SidebarSubLink[]> = {
     { name: 'Tools Reports', href: '/tools/reports', icon: ClipboardDocumentIcon },
   ]),
   materials: withIconPalette([
+    { name: 'Material Master', href: '/inventory/materials', icon: CubeIcon },
+    { name: 'Storage Location Master', href: '/inventory/materials/storage-locations', icon: BuildingOfficeIcon },
+    { name: 'Material Transactions', href: '/inventory/materials/transactions', icon: ClipboardDocumentListIcon },
+    { name: 'Material Batches', href: '/inventory/materials/batches', icon: ArchiveBoxIcon },
     { name: 'Project Issued Materials', href: '/projectissued-materials', icon: CubeIcon },
     { name: 'Project Return Materials', href: '/projectreturn-materials', icon: ArrowPathIcon },
     { name: 'Disposed Materials', href: '/disposed-materials', icon: TrashIcon },
@@ -235,7 +239,8 @@ export function getSectionFromPathname(pathname: string | null): NavigationSecti
   if (
     pathname.startsWith('/projectissued-materials') ||
     pathname.startsWith('/projectreturn-materials') ||
-    pathname.startsWith('/disposed-materials')
+    pathname.startsWith('/disposed-materials') ||
+    pathname.startsWith('/inventory/materials')
   ) {
     return 'materials';
   }
