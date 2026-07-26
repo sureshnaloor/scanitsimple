@@ -2,12 +2,13 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import * as XLSX from 'xlsx';
 import { authOptions } from '../../auth/[...nextauth]/auth';
+import { apiJson } from '@/lib/api-response';
 
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      return apiJson({ success: false, error: 'Unauthorized: sign in before using this feature' }, { status: 401 });
     }
 
     const workbook = XLSX.utils.book_new();
@@ -59,7 +60,7 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Error generating employee template:', error);
-    return NextResponse.json(
+    return apiJson(
       { success: false, error: 'Failed to generate employee template' },
       { status: 500 }
     );

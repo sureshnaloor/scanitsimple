@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 export async function GET(request: Request) {
   try {
@@ -58,10 +59,10 @@ export async function GET(request: Request) {
       return dateB - dateA;
     });
 
-    return NextResponse.json({ data: assets, total: assets.length });
+    return apiJson({ data: assets, total: assets.length });
   } catch (err) {
     console.error('Failed to fetch recent MME acquisitions:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to fetch recent acquisitions' },
       { status: 500 }
     );

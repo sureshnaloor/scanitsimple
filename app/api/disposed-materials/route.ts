@@ -2,14 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 export async function GET(request: NextRequest) {
   try {
     // Check authentication
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
+      return apiJson(
+        { error: 'Unauthorized: sign in before using this feature' },
         { status: 401 }
       );
     }
@@ -43,11 +44,11 @@ export async function GET(request: NextRequest) {
       .sort({ disposedAt: -1 })
       .toArray();
 
-    return NextResponse.json(disposedMaterials);
+    return apiJson(disposedMaterials);
 
   } catch (error) {
     console.error('Error fetching disposed materials:', error);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Internal server error' },
       { status: 500 }
     );

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
+import { apiJson } from '@/lib/api-response';
 
 export async function GET() {
   try {
@@ -67,6 +68,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Error generating locations template:', error);
-    return NextResponse.json({ success: false, error: 'Failed to generate template' }, { status: 500 });
+    return apiJson({ success: false, error: 'Failed to generate template' }, { status: 500 });
   }
 }

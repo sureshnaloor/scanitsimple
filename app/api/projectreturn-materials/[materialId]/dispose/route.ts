@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
+import { apiJson } from '@/lib/api-response';
 
 export async function POST(
   request: NextRequest,
@@ -11,7 +12,7 @@ export async function POST(
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return apiJson({ error: 'Unauthorized: sign in before using this feature' }, { status: 401 });
     }
 
     const { db, client } = await connectToDatabase();
@@ -23,12 +24,12 @@ export async function POST(
       .findOne({ materialid: materialId });
 
     if (!material) {
-      return NextResponse.json({ error: 'Material not found' }, { status: 404 });
+      return apiJson({ error: 'Material not found' }, { status: 404 });
     }
 
     // Check if material is already disposed
     if (material.disposed) {
-      return NextResponse.json({ error: 'Material already disposed' }, { status: 400 });
+      return apiJson({ error: 'Material already disposed' }, { status: 400 });
     }
 
     // Calculate current value (quantity * unit rate)
@@ -86,7 +87,7 @@ export async function POST(
         );
       });
 
-      return NextResponse.json({ 
+      return apiJson({ 
         success: true, 
         message: 'Material disposed successfully',
         disposedMaterial 
@@ -94,13 +95,13 @@ export async function POST(
 
     } catch (error) {
       console.error('Transaction error:', error);
-      return NextResponse.json({ error: 'Failed to dispose material' }, { status: 500 });
+      return apiJson({ error: 'Failed to dispose material' }, { status: 500 });
     } finally {
       await dbSession.endSession();
     }
 
   } catch (error) {
     console.error('Error disposing material:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return apiJson({ error: 'Internal server error' }, { status: 500 });
   }
 }

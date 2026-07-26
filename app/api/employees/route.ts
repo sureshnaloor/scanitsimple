@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '../auth/[...nextauth]/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import { Employee, EmployeeInsert, PPEApiResponse } from '@/types/ppe';
+import { apiJson } from '@/lib/api-response';
 
 async function validateDepartmentAndDesignation(
   department: unknown,
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      return apiJson({ success: false, error: 'Unauthorized: sign in before using this feature' }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -96,10 +97,10 @@ export async function GET(request: NextRequest) {
       }
     };
 
-    return NextResponse.json(response);
+    return apiJson(response);
   } catch (error) {
     console.error('Error fetching employees:', error);
-    return NextResponse.json(
+    return apiJson(
       { success: false, error: 'Failed to fetch employees' },
       { status: 500 }
     );
@@ -111,7 +112,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      return apiJson({ success: false, error: 'Unauthorized: sign in before using this feature' }, { status: 401 });
     }
 
     const body = await request.json();
@@ -119,7 +120,7 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!empno || !empname) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'Employee number and name are required' },
         { status: 400 }
       );
@@ -127,7 +128,7 @@ export async function POST(request: NextRequest) {
 
     const validationError = await validateDepartmentAndDesignation(department, designation);
     if (validationError) {
-      return NextResponse.json({ success: false, error: validationError }, { status: 400 });
+      return apiJson({ success: false, error: validationError }, { status: 400 });
     }
 
     const { db } = await connectToDatabase();
@@ -136,7 +137,7 @@ export async function POST(request: NextRequest) {
     // Check if employee number already exists
     const existingEmployee = await collection.findOne({ empno }) as Employee | null;
     if (existingEmployee) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'Employee number already exists' },
         { status: 400 }
       );
@@ -162,10 +163,10 @@ export async function POST(request: NextRequest) {
       message: 'Employee created successfully'
     };
 
-    return NextResponse.json(response, { status: 201 });
+    return apiJson(response, { status: 201 });
   } catch (error) {
     console.error('Error creating employee:', error);
-    return NextResponse.json(
+    return apiJson(
       { success: false, error: 'Failed to create employee' },
       { status: 500 }
     );

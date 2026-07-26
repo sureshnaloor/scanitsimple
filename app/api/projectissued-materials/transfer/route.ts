@@ -3,6 +3,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../auth/[...nextauth]/auth';
+import { apiJson } from '@/lib/api-response';
 
 // Function to generate material ID for return materials
 function generateReturnMaterialId(objectId: string): string {
@@ -18,8 +19,8 @@ export async function POST(request: Request) {
     // Check authentication
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
+      return apiJson(
+        { error: 'Unauthorized: sign in before using this feature' },
         { status: 401 }
       );
     }
@@ -28,7 +29,7 @@ export async function POST(request: Request) {
     const { materialId, transferData } = body;
 
     if (!materialId) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'Material ID is required' },
         { status: 400 }
       );
@@ -42,7 +43,7 @@ export async function POST(request: Request) {
       .findOne({ _id: new ObjectId(materialId) });
 
     if (!issuedMaterial) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'Material not found in issued materials' },
         { status: 404 }
       );
@@ -68,7 +69,7 @@ export async function POST(request: Request) {
     });
     
     if (balanceQuantity <= 0) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'No balance quantity available for transfer' },
         { status: 400 }
       );
@@ -128,7 +129,7 @@ export async function POST(request: Request) {
         );
       });
 
-      return NextResponse.json(
+      return apiJson(
         { 
           success: true, 
           message: 'Material transferred successfully',
@@ -143,7 +144,7 @@ export async function POST(request: Request) {
 
   } catch (err: any) {
     console.error('Failed to transfer material:', err);
-    return NextResponse.json(
+    return apiJson(
       { 
         error: err.message || 'Failed to transfer material',
         success: false 

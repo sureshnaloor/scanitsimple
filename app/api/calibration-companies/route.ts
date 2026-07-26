@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 export async function GET() {
   try {
@@ -9,10 +10,10 @@ export async function GET() {
       .sort({ name: 1 })
       .toArray();
 
-    return NextResponse.json(companies);
+    return apiJson(companies);
   } catch (error) {
     console.error('Failed to fetch calibration companies:', error);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to fetch calibration companies' },
       { status: 500 }
     );

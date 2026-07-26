@@ -335,6 +335,7 @@ export default function CalibrationDetails({ currentCalibration, calibrationHist
   const [showAlert, setShowAlert] = useState(true);
   const { show: showToast } = useToast();
   const { data: session } = useSession();
+  const isAdmin = (session?.user as { isAdmin?: boolean } | undefined)?.isAdmin === true;
   const createdBy = session?.user?.email ?? session?.user?.name ?? '';
   const idleToastKeyRef = useRef<string | null>(null);
 
@@ -779,7 +780,7 @@ export default function CalibrationDetails({ currentCalibration, calibrationHist
         </h2>
         
         <div className="flex gap-2">
-          {!isEditing && !isNewMode && (
+          {!isEditing && !isNewMode && isAdmin && (
             <>
               <button
                 onClick={() => setShowNewCalibrationModal(true)}

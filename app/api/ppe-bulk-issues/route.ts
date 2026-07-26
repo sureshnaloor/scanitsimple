@@ -3,13 +3,14 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '../auth/[...nextauth]/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import { PPEBulkIssue, PPEBulkIssueInsert, PPEMaster, Employee, PPETransactionInsert, PPEStockBalanceInsert, PPEApiResponse } from '@/types/ppe';
+import { apiJson } from '@/lib/api-response';
 
 // GET - Fetch bulk PPE issue records
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      return apiJson({ success: false, error: 'Unauthorized: sign in before using this feature' }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -81,10 +82,10 @@ export async function GET(request: NextRequest) {
       }
     };
 
-    return NextResponse.json(response);
+    return apiJson(response);
   } catch (error) {
     console.error('Error fetching bulk PPE issue records:', error);
-    return NextResponse.json(
+    return apiJson(
       { success: false, error: 'Failed to fetch bulk PPE issue records' },
       { status: 500 }
     );
@@ -96,7 +97,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      return apiJson({ success: false, error: 'Unauthorized: sign in before using this feature' }, { status: 401 });
     }
 
     const body = await request.json();
@@ -112,7 +113,7 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!departmentOrProjectName || !location || !ppeId || !quantityIssued || !receiverUserEmpNumber || !issueDate) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'Missing required fields' },
         { status: 400 }
       );
@@ -125,7 +126,7 @@ export async function POST(request: NextRequest) {
     const ppeMaster = await ppeMasterCollection.findOne({ ppeId, isActive: true }) as PPEMaster | null;
     
     if (!ppeMaster) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'PPE not found or inactive' },
         { status: 400 }
       );
@@ -139,7 +140,7 @@ export async function POST(request: NextRequest) {
     }) as Employee | null;
     
     if (!receiverEmployee) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'Receiver employee not found or inactive' },
         { status: 400 }
       );
@@ -229,10 +230,10 @@ export async function POST(request: NextRequest) {
         message: 'Bulk PPE issue record and stock transaction created successfully'
       };
 
-      return NextResponse.json(response, { status: 201 });
+      return apiJson(response, { status: 201 });
     } catch (error: any) {
       if (error.message.includes('Insufficient stock')) {
-        return NextResponse.json(
+        return apiJson(
           { success: false, error: error.message },
           { status: 400 }
         );
@@ -243,7 +244,7 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error('Error creating bulk PPE issue record:', error);
-    return NextResponse.json(
+    return apiJson(
       { success: false, error: 'Failed to create bulk PPE issue record' },
       { status: 500 }
     );

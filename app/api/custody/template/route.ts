@@ -2,12 +2,13 @@ import { NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../auth/[...nextauth]/auth';
+import { apiJson } from '@/lib/api-response';
 
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return apiJson({ error: 'Unauthorized: sign in before using this feature' }, { status: 401 });
     }
 
     const workbook = XLSX.utils.book_new();
@@ -85,6 +86,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Failed to generate custody template:', error);
-    return NextResponse.json({ error: 'Failed to generate template' }, { status: 500 });
+    return apiJson({ error: 'Failed to generate template' }, { status: 500 });
   }
 }

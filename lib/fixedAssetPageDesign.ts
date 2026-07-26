@@ -73,6 +73,8 @@ export function statusBadgeClass(status: string): string {
 }
 
 export function formatCurrency(value: number | null | undefined, currency = 'SAR'): string {
-  if (value === null || value === undefined || Number.isNaN(value)) return '—';
+  // Guest-masked sensitive values arrive as "***"
+  if ((value as unknown) === '***') return '***';
+  if (value === null || value === undefined || Number.isNaN(value) || typeof value !== 'number') return '—';
   return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(value);
 }

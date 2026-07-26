@@ -55,6 +55,15 @@ export default function IssuesByWBSPage() {
   const [expandedWBS, setExpandedWBS] = useState<Set<string>>(new Set());
   const [expandedMonth, setExpandedMonth] = useState<Set<string>>(new Set());
 
+  // Guests receive masked values — every aggregate figure becomes "***"
+  const hasMaskedValues = issues.some(
+    (issue) => (issue.originalValue as unknown) === '***' || (issue.valueAtIssue as unknown) === '***'
+  );
+  const formatAggValue = (v: number) =>
+    hasMaskedValues
+      ? '***'
+      : new Intl.NumberFormat('en-US', { style: 'currency', currency: 'SAR' }).format(v);
+
   useEffect(() => {
     fetchIssues();
   }, []);
@@ -248,6 +257,7 @@ export default function IssuesByWBSPage() {
       header: 'Original Value',
       cell: ({ row }) => {
         const value = row.getValue('originalValue') as number;
+        if ((value as unknown) === '***') return '***';
         return (
           <div className="text-gray-900 dark:text-white font-medium">
             {new Intl.NumberFormat('en-US', {
@@ -263,6 +273,7 @@ export default function IssuesByWBSPage() {
       header: 'Value at Issue',
       cell: ({ row }) => {
         const value = row.getValue('valueAtIssue') as number;
+        if ((value as unknown) === '***') return '***';
         return (
           <div className="text-green-700 dark:text-green-400 font-semibold">
             {new Intl.NumberFormat('en-US', {
@@ -349,8 +360,8 @@ export default function IssuesByWBSPage() {
                       </h3>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         {group.issues.length} issue(s) • Total Quantity: {group.totalQuantity.toLocaleString()} • 
-                        Original Value: {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'SAR' }).format(group.totalOriginalValue)} • 
-                        Value at Issue: {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'SAR' }).format(group.totalValueAtIssue)}
+                        Original Value: {formatAggValue(group.totalOriginalValue)} • 
+                        Value at Issue: {formatAggValue(group.totalValueAtIssue)}
                       </p>
                     </div>
                   </div>
@@ -406,8 +417,8 @@ export default function IssuesByWBSPage() {
                       </h3>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         {group.issues.length} issue(s) • Total Quantity: {group.totalQuantity.toLocaleString()} • 
-                        Original Value: {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'SAR' }).format(group.totalOriginalValue)} • 
-                        Value at Issue: {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'SAR' }).format(group.totalValueAtIssue)}
+                        Original Value: {formatAggValue(group.totalOriginalValue)} • 
+                        Value at Issue: {formatAggValue(group.totalValueAtIssue)}
                       </p>
                     </div>
                   </div>
@@ -448,17 +459,11 @@ export default function IssuesByWBSPage() {
             </div>
             <div>
               <span className="font-semibold">Total Original Value:</span>{' '}
-              {new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: 'SAR'
-              }).format(issues.reduce((sum, issue) => sum + issue.originalValue, 0))}
+              {formatAggValue(issues.reduce((sum, issue) => sum + issue.originalValue, 0))}
             </div>
             <div>
               <span className="font-semibold">Total Value at Issue:</span>{' '}
-              {new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: 'SAR'
-              }).format(issues.reduce((sum, issue) => sum + issue.valueAtIssue, 0))}
+              {formatAggValue(issues.reduce((sum, issue) => sum + issue.valueAtIssue, 0))}
             </div>
           </div>
         </div>

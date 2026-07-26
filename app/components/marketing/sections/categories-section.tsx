@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { SectionHeader } from '../section-header';
 import { StaggerContainer, StaggerItem } from '../fade-up';
+import { TiltCard } from '@/app/components/effects/tilt-card';
 import { categories } from '../marketing-data';
 import { Badge } from '@/components/ui/badge';
 
@@ -19,31 +20,33 @@ export function CategoriesSection() {
         <StaggerContainer className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {categories.map((cat) => (
             <StaggerItem key={cat.title}>
-              <div className="group overflow-hidden rounded-xl border border-primary-light bg-category-gradient shadow-ds-md transition-all duration-300 hover:-translate-y-1 hover:shadow-ds-lg hover:shadow-glow-teal">
-                <div className="relative h-[200px] overflow-hidden bg-primary-slate">
-                  <Image
-                    src={cat.image}
-                    alt={cat.title}
-                    fill
-                    className="object-cover transition-transform duration-400 group-hover:scale-105"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-primary-navy/80 to-transparent" />
-                </div>
-                <div className="p-6">
-                  <h3 className="text-h4 mb-1">{cat.title}</h3>
-                  <p className="mb-4 text-sm font-medium text-accent-teal">{cat.count}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {cat.subtypes.map((tag) => (
-                      <Badge key={tag} variant="default" className="normal-case tracking-normal">
-                        {tag}
-                      </Badge>
-                    ))}
+              <TiltCard tiltAmount={8} className="h-full">
+                <div className="group overflow-hidden rounded-xl border border-primary-light bg-category-gradient shadow-ds-md transition-all duration-300 hover:-translate-y-1 hover:shadow-ds-lg hover:shadow-glow-teal h-full">
+                  <div className="relative h-[200px] overflow-hidden bg-primary-slate">
+                    <Image
+                      src={cat.image}
+                      alt={cat.title}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-110"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-primary-navy/80 to-transparent" />
+                  </div>
+                  <div className="p-6">
+                    <h3 className="text-h4 mb-1">{cat.title}</h3>
+                    <p className="mb-4 text-sm font-medium text-accent-teal">{cat.count}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {cat.subtypes.map((tag) => (
+                        <Badge key={tag} variant="default" className="normal-case tracking-normal transition-all duration-200 hover:bg-accent-teal hover:text-white">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
+              </TiltCard>
             </StaggerItem>
           ))}
         </StaggerContainer>

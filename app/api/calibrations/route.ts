@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import type { Calibration } from '@/types/asset';
+import { apiJson } from '@/lib/api-response';
 
 function parseOptionalDate(value: unknown): Date | null {
   if (value === null || value === undefined || value === '') return null;
@@ -33,10 +34,10 @@ export async function GET() {
   try {
     const { db } = await connectToDatabase();
     const calibrations = await db.collection('equipmentcalibcertificates').find({}).toArray();
-    return NextResponse.json(calibrations);
+    return apiJson(calibrations);
   } catch (err) {
     console.error('Failed to fetch calibrations:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to fetch calibrations' },
       { status: 500 }
     );
@@ -56,10 +57,10 @@ export async function POST(request: Request) {
     };
     
     const result = await db.collection('equipmentcalibcertificates').insertOne(calibrationData);
-    return NextResponse.json(result, { status: 201 });
+    return apiJson(result, { status: 201 });
   } catch (err) {
     console.error('Failed to create calibration:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to create calibration' },
       { status: 500 }
     );

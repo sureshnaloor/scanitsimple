@@ -6,11 +6,13 @@ import {
   SortingState,
   ColumnFiltersState
 } from '@tanstack/react-table';
-import { ArrowUpDown } from 'lucide-react';
+import { ArrowUpDown, Pencil, UserCheck } from 'lucide-react';
 import Link from 'next/link';
 import * as XLSX from 'xlsx';
 
 import { SearchField } from '@/components/ui/search-field';
+import { useAccess } from '@/lib/use-access';
+import { useAssetMasters, ASSET_STATUSES } from '@/lib/use-asset-masters';
 
 import { AssetQRCode } from '@/components/AssetQRCode';
 import ResponsiveTanStackTable from '@/components/ui/responsive-tanstack-table';
@@ -32,6 +34,8 @@ interface FixedAsset {
   acquireddate: Date;
   location: string;
   department: string;
+  assetmanufacturer?: string;
+  assetmodel?: string;
 }
 
 interface BulkFixedAssetRow {
@@ -73,6 +77,87 @@ export default function FixedAssetPage() {
   const [errorModalOpen, setErrorModalOpen] = useState(false);
   const [errorModalTitle, setErrorModalTitle] = useState('Bulk Insert Error');
   const [errorModalContent, setErrorModalContent] = useState('');
+
+  // Admin-only row editing of basic (table-column) fields
+  const { isAdmin } = useAccess();
+  const [editAsset, setEditAsset] = useState<FixedAsset | null>(null);
+  const [editForm, setEditForm] = useState({
+    assetdescription: '',
+    assetcategory: '',
+    assetsubcategory: '',
+    assetstatus: '',
+    assetmanufacturer: '',
+    assetmodel: '',
+    location: '',
+    department: '',
+    acquiredvalue: '',
+    acquireddate: '',
+  });
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState('');
+
+  // Master-data dropdown options, same as the dynamic detail page
+  const { categories, subcategories, manufacturers } = useAssetMasters(true, editForm.assetcategory);
+
+  const toInputDate = (value: unknown): string => {
+    if (!value) return '';
+    const d = new Date(value as string);
+    return Number.isNaN(d.getTime()) ? '' : d.toISOString().slice(0, 10);
+  };
+
+  const openEdit = (asset: FixedAsset) => {
+    setEditAsset(asset);
+    setEditForm({
+      assetdescription: asset.assetdescription ?? '',
+      assetcategory: asset.assetcategory ?? '',
+      assetsubcategory: asset.assetsubcategory ?? '',
+      assetstatus: asset.assetstatus ?? '',
+      assetmanufacturer: asset.assetmanufacturer ?? '',
+      assetmodel: asset.assetmodel ?? '',
+      location: asset.location ?? '',
+      department: asset.department ?? '',
+      acquiredvalue:
+        typeof asset.acquiredvalue === 'number' ? String(asset.acquiredvalue) : '',
+      acquireddate: toInputDate(asset.acquireddate),
+    });
+    setEditError('');
+  };
+
+  const handleEditSave = async () => {
+    if (!editAsset) return;
+    setEditSaving(true);
+    setEditError('');
+    try {
+      const payload = {
+        assetdescription: editForm.assetdescription,
+        assetcategory: editForm.assetcategory,
+        assetsubcategory: editForm.assetsubcategory,
+        assetstatus: editForm.assetstatus,
+        assetmanufacturer: editForm.assetmanufacturer,
+        assetmodel: editForm.assetmodel,
+        location: editForm.location,
+        department: editForm.department,
+        acquiredvalue: editForm.acquiredvalue === '' ? null : Number(editForm.acquiredvalue),
+        acquireddate: editForm.acquireddate || null,
+      };
+      const res = await fetch(`/api/fixedassets/${editAsset.assetnumber}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const updated = await res.json();
+      if (!res.ok) throw new Error(updated.error || 'Failed to update fixed asset');
+      const patchRows = (rows: FixedAsset[]) =>
+        rows.map((r) => (r._id === editAsset._id ? { ...r, ...updated } : r));
+      setData(patchRows);
+      setRecentAssets(patchRows);
+      setEditAsset(null);
+    } catch (err: any) {
+      setEditError(err.message || 'Failed to update fixed asset');
+    } finally {
+      setEditSaving(false);
+    }
+  };
 
   const isSearchActive =
     (assetNumberSearch?.trim().length ?? 0) >= 2 ||
@@ -449,15 +534,28 @@ export default function FixedAssetPage() {
             id: 'actions',
             header: () => <span className={th}>Actions</span>,
             cell: ({ row }) => (
-              <div className="flex flex-wrap gap-2 text-[12px]">
+              <div className="flex items-center gap-3">
                 <Link
                   href={`/fixedasset/${row.original.assetnumber}#custody`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className={fap.link}
+                  title="Custody"
+                  aria-label="Custody"
                 >
-                  Custody
+                  <UserCheck className="h-4 w-4" />
                 </Link>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => openEdit(row.original)}
+                    className={fap.link}
+                    title="Edit basic details"
+                    aria-label="Edit basic details"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                )}
               </div>
             ),
           } as ColumnDef<FixedAsset>,
@@ -468,6 +566,35 @@ export default function FixedAssetPage() {
             header: () => <span className={th}>QR Code</span>,
             cell: ({ row }) => (
               <AssetQRCode assetNumber={row.original.assetnumber} assetType="fixedasset" />
+            ),
+          } as ColumnDef<FixedAsset>,
+          {
+            id: 'actions',
+            header: () => <span className={th}>Actions</span>,
+            cell: ({ row }) => (
+              <div className="flex items-center gap-3">
+                <Link
+                  href={`/fixedasset/${row.original.assetnumber}#custody`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={fap.link}
+                  title="Custody"
+                  aria-label="Custody"
+                >
+                  <UserCheck className="h-4 w-4" />
+                </Link>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => openEdit(row.original)}
+                    className={fap.link}
+                    title="Edit basic details"
+                    aria-label="Edit basic details"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
             ),
           } as ColumnDef<FixedAsset>,
         ]),
@@ -597,6 +724,167 @@ export default function FixedAssetPage() {
             />
           )}
         </div>
+
+        {editAsset && (
+          <div className={fap.modalOverlay}>
+            <div className={`${fap.modal} max-w-2xl`}>
+              <h3 className="mb-1 text-2xl font-semibold text-[#0F172A] dark:text-[#F8F9FA]">
+                Edit basic details
+              </h3>
+              <p className="mb-4 font-mono text-sm text-[#00B4D8]">{editAsset.assetnumber}</p>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <label className="md:col-span-2">
+                  <span className={fap.fieldLabel}>Description</span>
+                  <input
+                    type="text"
+                    value={editForm.assetdescription}
+                    onChange={(e) => setEditForm((f) => ({ ...f, assetdescription: e.target.value }))}
+                    className={fap.input}
+                  />
+                </label>
+                <label>
+                  <span className={fap.fieldLabel}>Category</span>
+                  <select
+                    value={editForm.assetcategory || 'Select Category'}
+                    onChange={(e) => {
+                      const next = e.target.value === 'Select Category' ? '' : e.target.value;
+                      setEditForm((f) => ({ ...f, assetcategory: next, assetsubcategory: '' }));
+                    }}
+                    className={fap.input}
+                  >
+                    <option value="Select Category">Select Category</option>
+                    {categories.map((c) => (
+                      <option key={c._id} value={c.name}>{c.name}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  <span className={fap.fieldLabel}>Subcategory</span>
+                  <select
+                    value={editForm.assetsubcategory || 'Select Subcategory'}
+                    onChange={(e) =>
+                      setEditForm((f) => ({
+                        ...f,
+                        assetsubcategory: e.target.value === 'Select Subcategory' ? '' : e.target.value,
+                      }))
+                    }
+                    disabled={!editForm.assetcategory}
+                    className={fap.input}
+                  >
+                    <option value="Select Subcategory">Select Subcategory</option>
+                    {subcategories.map((s) => (
+                      <option key={s._id} value={s.name}>{s.name}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  <span className={fap.fieldLabel}>Status</span>
+                  <select
+                    value={editForm.assetstatus || 'Select Status'}
+                    onChange={(e) =>
+                      setEditForm((f) => ({
+                        ...f,
+                        assetstatus: e.target.value === 'Select Status' ? '' : e.target.value,
+                      }))
+                    }
+                    className={fap.input}
+                  >
+                    {ASSET_STATUSES.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  <span className={fap.fieldLabel}>Manufacturer</span>
+                  <select
+                    value={editForm.assetmanufacturer || 'Select Manufacturer'}
+                    onChange={(e) =>
+                      setEditForm((f) => ({
+                        ...f,
+                        assetmanufacturer: e.target.value === 'Select Manufacturer' ? '' : e.target.value,
+                      }))
+                    }
+                    className={fap.input}
+                  >
+                    <option value="Select Manufacturer">Select Manufacturer</option>
+                    {manufacturers.map((m) => (
+                      <option key={m._id} value={m.name}>{m.name}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  <span className={fap.fieldLabel}>Model</span>
+                  <input
+                    type="text"
+                    value={editForm.assetmodel}
+                    onChange={(e) => setEditForm((f) => ({ ...f, assetmodel: e.target.value }))}
+                    className={fap.input}
+                  />
+                </label>
+                <label>
+                  <span className={fap.fieldLabel}>Location</span>
+                  <input
+                    type="text"
+                    value={editForm.location}
+                    onChange={(e) => setEditForm((f) => ({ ...f, location: e.target.value }))}
+                    className={fap.input}
+                  />
+                </label>
+                <label>
+                  <span className={fap.fieldLabel}>Department</span>
+                  <input
+                    type="text"
+                    value={editForm.department}
+                    onChange={(e) => setEditForm((f) => ({ ...f, department: e.target.value }))}
+                    className={fap.input}
+                  />
+                </label>
+                <label>
+                  <span className={fap.fieldLabel}>Value (SAR)</span>
+                  <input
+                    type="number"
+                    value={editForm.acquiredvalue}
+                    onChange={(e) => setEditForm((f) => ({ ...f, acquiredvalue: e.target.value }))}
+                    className={fap.input}
+                  />
+                </label>
+                <label>
+                  <span className={fap.fieldLabel}>Acquiring date</span>
+                  <input
+                    type="date"
+                    value={editForm.acquireddate}
+                    onChange={(e) => setEditForm((f) => ({ ...f, acquireddate: e.target.value }))}
+                    className={fap.input}
+                  />
+                </label>
+              </div>
+
+              {editError && (
+                <p className="mt-4 text-sm font-medium text-red-500">{editError}</p>
+              )}
+
+              <div className="mt-6 flex flex-wrap justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditAsset(null)}
+                  className={fap.btnSecondary}
+                  disabled={editSaving}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleEditSave}
+                  className={fap.btnPrimary}
+                  disabled={editSaving}
+                >
+                  {editSaving ? 'Saving…' : 'Save changes'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {showBulkInsertModal && (
           <div className={fap.modalOverlay}>

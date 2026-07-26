@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
+import { apiJson } from '@/lib/api-response';
 
 export async function GET() {
   try {
     const { db } = await connectToDatabase();
     const categories = await db.collection('FIXED_ASSET_CATEGORIES').find({}).toArray();
-    return NextResponse.json(categories);
+    return apiJson(categories);
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch fixed asset categories' }, { status: 500 });
+    return apiJson({ error: 'Failed to fetch fixed asset categories' }, { status: 500 });
   }
 }
 
@@ -17,9 +18,9 @@ export async function POST(request: Request) {
     const { name } = await request.json();
     const { db } = await connectToDatabase();
     const result = await db.collection('FIXED_ASSET_CATEGORIES').insertOne({ name });
-    return NextResponse.json(result, { status: 201 });
+    return apiJson(result, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to create fixed asset category' }, { status: 500 });
+    return apiJson({ error: 'Failed to create fixed asset category' }, { status: 500 });
   }
 }
 
@@ -31,9 +32,9 @@ export async function PUT(request: Request) {
       { _id: new ObjectId(_id) },
       { $set: { name } }
     );
-    return NextResponse.json(result);
+    return apiJson(result);
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to update fixed asset category' }, { status: 500 });
+    return apiJson({ error: 'Failed to update fixed asset category' }, { status: 500 });
   }
 }
 
@@ -47,8 +48,8 @@ export async function DELETE(request: Request) {
     const result = await db.collection('FIXED_ASSET_CATEGORIES').deleteOne({
       _id: new ObjectId(id)
     });
-    return NextResponse.json(result);
+    return apiJson(result);
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to delete fixed asset category' }, { status: 500 });
+    return apiJson({ error: 'Failed to delete fixed asset category' }, { status: 500 });
   }
 } 

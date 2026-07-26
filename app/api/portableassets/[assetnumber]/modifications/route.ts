@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 const RECORDS = 'portable_modification';
 
@@ -15,7 +16,7 @@ export async function GET(
 
     const asset = await db.collection('portableasset').findOne({ assetnumber });
     if (!asset) {
-      return NextResponse.json({ error: 'Portable asset not found.' }, { status: 404 });
+      return apiJson({ error: 'Portable asset not found.' }, { status: 404 });
     }
 
     const rows = await db
@@ -23,10 +24,10 @@ export async function GET(
       .find({ assetnumber })
       .sort({ createdAt: -1 })
       .toArray();
-    return NextResponse.json(rows);
+    return apiJson(rows);
   } catch (error) {
     console.error('GET portable modifications:', error);
-    return NextResponse.json({ error: 'Failed to load modifications' }, { status: 500 });
+    return apiJson({ error: 'Failed to load modifications' }, { status: 500 });
   }
 }
 
@@ -44,26 +45,26 @@ export async function POST(
     const remarks = String(body?.remarks ?? '').trim();
 
     if (!KINDS.has(entryKind)) {
-      return NextResponse.json({ error: 'entryKind must be material or service.' }, { status: 400 });
+      return apiJson({ error: 'entryKind must be material or service.' }, { status: 400 });
     }
     if (!category) {
-      return NextResponse.json({ error: 'Category is required (e.g. HVAC, painting).' }, { status: 400 });
+      return apiJson({ error: 'Category is required (e.g. HVAC, painting).' }, { status: 400 });
     }
     if (!description) {
-      return NextResponse.json({ error: 'Description is required.' }, { status: 400 });
+      return apiJson({ error: 'Description is required.' }, { status: 400 });
     }
 
     const { db } = await connectToDatabase();
     const asset = await db.collection('portableasset').findOne({ assetnumber });
     if (!asset) {
-      return NextResponse.json({ error: 'Portable asset not found.' }, { status: 404 });
+      return apiJson({ error: 'Portable asset not found.' }, { status: 404 });
     }
 
     let workDate: Date | null = null;
     if (body?.workDate !== undefined && body?.workDate !== null && body?.workDate !== '') {
       const d = new Date(String(body.workDate));
       if (Number.isNaN(d.getTime())) {
-        return NextResponse.json({ error: 'Invalid work date.' }, { status: 400 });
+        return apiJson({ error: 'Invalid work date.' }, { status: 400 });
       }
       workDate = d;
     }
@@ -80,9 +81,9 @@ export async function POST(
 
     const result = await db.collection(RECORDS).insertOne(doc);
     const created = await db.collection(RECORDS).findOne({ _id: result.insertedId });
-    return NextResponse.json(created, { status: 201 });
+    return apiJson(created, { status: 201 });
   } catch (error) {
     console.error('POST portable modification:', error);
-    return NextResponse.json({ error: 'Failed to create modification' }, { status: 500 });
+    return apiJson({ error: 'Failed to create modification' }, { status: 500 });
   }
 }

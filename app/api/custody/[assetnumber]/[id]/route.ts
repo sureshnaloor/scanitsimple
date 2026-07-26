@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
+import { apiJson } from '@/lib/api-response';
 
 export async function PUT(
   request: Request,
@@ -23,7 +24,7 @@ export async function PUT(
     );
 
     if (result.matchedCount === 0) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'Custody record not found' },
         { status: 404 }
       );
@@ -35,10 +36,10 @@ export async function PUT(
       assetnumber: assetnumber
     });
 
-    return NextResponse.json(updatedRecord);
+    return apiJson(updatedRecord);
   } catch (error) {
     console.error('Failed to update custody record:', error);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to update custody record' },
       { status: 500 }
     );

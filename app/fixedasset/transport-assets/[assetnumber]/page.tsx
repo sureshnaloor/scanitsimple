@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { Calendar, MapPin, Tag, Truck } from 'lucide-react';
+import { Calendar, MapPin, Tag, Truck, Pencil, Trash2 } from 'lucide-react';
 
 import FixedAssetBreadcrumb from '@/app/components/fixedasset/FixedAssetBreadcrumb';
 import FixedAssetSection from '@/app/components/fixedasset/FixedAssetSection';
@@ -12,6 +12,9 @@ import { AssetQRCode } from '@/components/AssetQRCode';
 import CustomDetailsSection from '@/app/components/CustomDetailsSection';
 import FixedAssetDetailShell from '@/app/components/fixedasset/FixedAssetDetailShell';
 import { fap, formatCurrency } from '@/lib/fixedAssetPageDesign';
+import { useAccess } from '@/lib/use-access';
+import { useAssetMasters } from '@/lib/use-asset-masters';
+import MasterDataSelects from '@/app/components/fixedasset/MasterDataSelects';
 
 interface TransportDetail {
   _id: string;
@@ -75,6 +78,7 @@ function dOut(v: string | Date | null | undefined): string {
 }
 
 export default function TransportAssetDetailPage() {
+  const { isAdmin } = useAccess();
   const params = useParams();
   const assetnumber = typeof params?.assetnumber === 'string' ? params.assetnumber : '';
 
@@ -98,6 +102,9 @@ export default function TransportAssetDetailPage() {
     vehicleModel: '',
     modelYear: ''
   });
+
+  // Master-data dropdown options, same as the main detail pages
+  const assetMasters = useAssetMasters(true, topForm.assetcategory);
 
   const [prevMasters, setPrevMasters] = useState<MasterRow[]>([]);
   const [brkMasters, setBrkMasters] = useState<MasterRow[]>([]);
@@ -488,7 +495,7 @@ export default function TransportAssetDetailPage() {
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
               <div className="space-y-6">
                 <FixedAssetSection title="Edit asset details" defaultExpanded>
-                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  <fieldset disabled={!isAdmin} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     <label className="block sm:col-span-2 lg:col-span-3">
                       <span className={fap.fieldLabel}>Description</span>
                       <input
@@ -497,11 +504,18 @@ export default function TransportAssetDetailPage() {
                         onChange={(e) => setTopForm((f) => ({ ...f, assetdescription: e.target.value }))}
                       />
                     </label>
+                    <MasterDataSelects
+                      category={topForm.assetcategory}
+                      subcategory={topForm.assetsubcategory}
+                      status={topForm.assetstatus}
+                      categories={assetMasters.categories}
+                      subcategories={assetMasters.subcategories}
+                      onPatch={(p) => setTopForm((f) => ({ ...f, ...p }))}
+                      labelClass={fap.fieldLabel}
+                      inputClass={inp}
+                    />
                     {(
                       [
-                        ['assetcategory', 'Category'],
-                        ['assetsubcategory', 'Subcategory'],
-                        ['assetstatus', 'Status'],
                         ['location', 'Location'],
                         ['department', 'Department'],
                         ['plateNumber', 'Plate number'],
@@ -547,15 +561,17 @@ export default function TransportAssetDetailPage() {
                         onChange={(e) => setTopForm((f) => ({ ...f, acquireddate: e.target.value }))}
                       />
                     </label>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={saveTop}
-                    disabled={topSaving}
-                    className={`${fap.btnPrimary} mt-4`}
-                  >
-                    {topSaving ? 'Saving…' : 'Save asset details'}
-                  </button>
+                  </fieldset>
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={saveTop}
+                      disabled={topSaving}
+                      className={`${fap.btnPrimary} mt-4`}
+                    >
+                      {topSaving ? 'Saving…' : 'Save asset details'}
+                    </button>
+                  )}
                 </FixedAssetSection>
 
                 <FixedAssetSection
@@ -592,27 +608,37 @@ export default function TransportAssetDetailPage() {
                             <td className="px-3 py-2">{dOut(r.actualDate)}</td>
                             <td className="max-w-[200px] truncate px-3 py-2">{r.remarks || '—'}</td>
                             <td className="whitespace-nowrap px-3 py-2">
-                              <button
-                                type="button"
-                                onClick={() => openEditPrev(r)}
-                                className="mr-2 text-xs text-[#00B4D8] hover:underline"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => deletePrev(r._id)}
-                                className="text-xs text-[#EF4444] hover:underline"
-                              >
-                                Delete
-                              </button>
+                              {isAdmin && (
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => openEditPrev(r)}
+                                    className="text-[#00B4D8] hover:opacity-80"
+                                    title="Edit record"
+                                    aria-label="Edit record"
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => deletePrev(r._id)}
+                                    className="text-[#EF4444] hover:opacity-80"
+                                    title="Delete record"
+                                    aria-label="Delete record"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              )}
                             </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
-                  <div className="mt-4 grid gap-3 border-t border-slate-200 dark:border-[#2A3B4C]/50 pt-4 sm:grid-cols-2 lg:grid-cols-4">
+                  {isAdmin && (
+                    <>
+                      <div className="mt-4 grid gap-3 border-t border-slate-200 dark:border-[#2A3B4C]/50 pt-4 sm:grid-cols-2 lg:grid-cols-4">
                     <label className="block sm:col-span-2">
                       <span className={fap.fieldLabel}>Type</span>
                       <select
@@ -654,10 +680,12 @@ export default function TransportAssetDetailPage() {
                         onChange={(e) => setNewPrev((f) => ({ ...f, remarks: e.target.value }))}
                       />
                     </label>
-                  </div>
-                  <button type="button" onClick={addPreventive} className={`${fap.btnPrimary} mt-4`}>
-                    Add preventive record
-                  </button>
+                      </div>
+                      <button type="button" onClick={addPreventive} className={`${fap.btnPrimary} mt-4`}>
+                        Add preventive record
+                      </button>
+                    </>
+                  )}
                 </FixedAssetSection>
 
                 <FixedAssetSection
@@ -692,27 +720,37 @@ export default function TransportAssetDetailPage() {
                             <td className="px-3 py-2">{dOut(r.actualDate)}</td>
                             <td className="max-w-[240px] truncate px-3 py-2">{r.remarks || '—'}</td>
                             <td className="whitespace-nowrap px-3 py-2">
-                              <button
-                                type="button"
-                                onClick={() => openEditBrk(r)}
-                                className="mr-2 text-xs text-[#00B4D8] hover:underline"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => deleteBrk(r._id)}
-                                className="text-xs text-[#EF4444] hover:underline"
-                              >
-                                Delete
-                              </button>
+                              {isAdmin && (
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => openEditBrk(r)}
+                                    className="text-[#00B4D8] hover:opacity-80"
+                                    title="Edit record"
+                                    aria-label="Edit record"
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => deleteBrk(r._id)}
+                                    className="text-[#EF4444] hover:opacity-80"
+                                    title="Delete record"
+                                    aria-label="Delete record"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              )}
                             </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
-                  <div className="mt-4 grid gap-3 border-t border-slate-200 dark:border-[#2A3B4C]/50 pt-4 sm:grid-cols-2">
+                  {isAdmin && (
+                    <>
+                      <div className="mt-4 grid gap-3 border-t border-slate-200 dark:border-[#2A3B4C]/50 pt-4 sm:grid-cols-2">
                     <label className="block sm:col-span-2">
                       <span className={fap.fieldLabel}>Type</span>
                       <select
@@ -745,14 +783,16 @@ export default function TransportAssetDetailPage() {
                         onChange={(e) => setNewBrk((f) => ({ ...f, remarks: e.target.value }))}
                       />
                     </label>
-                  </div>
-                  <button type="button" onClick={addBreakdown} className={`${fap.btnPrimary} mt-4`}>
-                    Add breakdown record
-                  </button>
+                      </div>
+                      <button type="button" onClick={addBreakdown} className={`${fap.btnPrimary} mt-4`}>
+                        Add breakdown record
+                      </button>
+                    </>
+                  )}
                 </FixedAssetSection>
 
                 <FixedAssetSection title="GPS Tracker details" description="GPS tracker installation and subscription information." defaultExpanded>
-                  <div className="grid gap-4 sm:grid-cols-2">
+                  <fieldset disabled={!isAdmin} className="grid gap-4 sm:grid-cols-2">
                     <label className="block">
                       <span className={fap.fieldLabel}>Tracker serial number</span>
                       <input
@@ -815,15 +855,17 @@ export default function TransportAssetDetailPage() {
                         onChange={(e) => setGpsForm((f) => ({ ...f, trackerRemarks: e.target.value }))}
                       />
                     </label>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={saveGps}
-                    disabled={gpsSaving}
-                    className={`${fap.btnPrimary} mt-4`}
-                  >
-                    {gpsSaving ? 'Saving…' : 'Save GPS tracker details'}
-                  </button>
+                  </fieldset>
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={saveGps}
+                      disabled={gpsSaving}
+                      className={`${fap.btnPrimary} mt-4`}
+                    >
+                      {gpsSaving ? 'Saving…' : 'Save GPS tracker details'}
+                    </button>
+                  )}
                 </FixedAssetSection>
 
                 <CustomDetailsSection assetType="transport" assetnumber={assetnumber} />

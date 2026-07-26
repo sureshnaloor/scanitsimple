@@ -3,6 +3,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]/auth';
+import { apiJson } from '@/lib/api-response';
 
 // Function to generate 10-digit material ID from ObjectId
 function generateMaterialId(objectId: string): string {
@@ -25,8 +26,8 @@ export async function GET(request: Request) {
     // Check authentication
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
+      return apiJson(
+        { error: 'Unauthorized: sign in before using this feature' },
         { status: 401 }
       );
     }
@@ -56,10 +57,10 @@ export async function GET(request: Request) {
       .sort({ createdAt: -1 })
       .toArray();
 
-    return NextResponse.json(materials);
+    return apiJson(materials);
   } catch (err) {
     console.error('Failed to fetch project issued materials:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to fetch project issued materials' },
       { status: 500 }
     );
@@ -71,8 +72,8 @@ export async function POST(request: Request) {
     // Check authentication
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
+      return apiJson(
+        { error: 'Unauthorized: sign in before using this feature' },
         { status: 401 }
       );
     }
@@ -112,10 +113,10 @@ export async function POST(request: Request) {
     body.updatedAt = new Date();
     
     const result = await db.collection('projectissuedmaterials').insertOne(body);
-    return NextResponse.json({ ...result, materialid: body.materialid }, { status: 201 });
+    return apiJson({ ...result, materialid: body.materialid }, { status: 201 });
   } catch (err) {
     console.error('Failed to create project issued material:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to create project issued material' },
       { status: 500 }
     );

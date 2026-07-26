@@ -10,6 +10,7 @@ import ResponsiveTable from '@/components/ui/responsive-table';
 import SearchablePPESelect from '@/components/SearchablePPESelect';
 import { PPEReceipt } from '@/types/ppe';
 import { useAppTheme } from '@/app/contexts/ThemeContext';
+import { useAccess } from '@/lib/use-access';
 
 interface PPEReceiptFormData {
   ppeId: string;
@@ -21,6 +22,7 @@ interface PPEReceiptFormData {
 
 export default function PPEReceiptsPage() {
   const { theme } = useAppTheme();
+  const { isAdmin } = useAccess();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Array<{
     x: number;
@@ -328,9 +330,11 @@ export default function PPEReceiptsPage() {
             <TabsTrigger value="list" className={s.tabsTrigger}>
               Receipt Records
             </TabsTrigger>
-            <TabsTrigger value="new" className={s.tabsTrigger}>
-              New Receipt
-            </TabsTrigger>
+            {isAdmin && (
+              <TabsTrigger value="new" className={s.tabsTrigger}>
+                New Receipt
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="list" className="space-y-4 mt-6">

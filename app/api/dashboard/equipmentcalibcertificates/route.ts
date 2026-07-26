@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '../../auth/[...nextauth]/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import type { DashboardCollectionMetaResponse } from '@/types/dashboard';
+import { apiJson } from '@/lib/api-response';
 
 /**
  * Summarises `equipmentcalibcertificates` for dashboards and schema discovery.
@@ -12,7 +13,7 @@ export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      return apiJson({ success: false, error: 'Unauthorized: sign in before using this feature' }, { status: 401 });
     }
 
     const { db } = await connectToDatabase();
@@ -54,9 +55,9 @@ export async function GET() {
       }),
     };
 
-    return NextResponse.json({ success: true, ...body });
+    return apiJson({ success: true, ...body });
   } catch (e) {
     console.error('equipmentcalibcertificates meta:', e);
-    return NextResponse.json({ success: false, error: 'Failed to read collection' }, { status: 500 });
+    return apiJson({ success: false, error: 'Failed to read collection' }, { status: 500 });
   }
 }

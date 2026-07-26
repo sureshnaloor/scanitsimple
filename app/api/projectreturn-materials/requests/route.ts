@@ -3,14 +3,15 @@ import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../auth/[...nextauth]/auth';
+import { apiJson } from '@/lib/api-response';
 
 export async function GET(request: Request) {
   try {
     // Check authentication
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
+      return apiJson(
+        { error: 'Unauthorized: sign in before using this feature' },
         { status: 401 }
       );
     }
@@ -31,10 +32,10 @@ export async function GET(request: Request) {
       .sort({ createdAt: -1 })
       .toArray();
 
-    return NextResponse.json(requests);
+    return apiJson(requests);
   } catch (err) {
     console.error('Failed to fetch project return material requests:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to fetch project return material requests' },
       { status: 500 }
     );
@@ -46,8 +47,8 @@ export async function POST(request: Request) {
     // Check authentication
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
+      return apiJson(
+        { error: 'Unauthorized: sign in before using this feature' },
         { status: 401 }
       );
     }
@@ -61,14 +62,14 @@ export async function POST(request: Request) {
     });
     
     if (!material) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'Material not found' },
         { status: 404 }
       );
     }
 
     if (body.qtyRequested > material.quantity) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'Requested quantity exceeds available quantity' },
         { status: 400 }
       );
@@ -95,10 +96,10 @@ export async function POST(request: Request) {
       }
     );
 
-    return NextResponse.json({ ...result, requestId: requestData._id }, { status: 201 });
+    return apiJson({ ...result, requestId: requestData._id }, { status: 201 });
   } catch (err) {
     console.error('Failed to create project return material request:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to create project return material request' },
       { status: 500 }
     );

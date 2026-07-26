@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 const COLLECTION = 'facilityasset';
 const ONCALL = 'facility_oncall_maintenance';
@@ -13,13 +14,13 @@ export async function GET(
     const asset = await db.collection(COLLECTION).findOne({ assetnumber: params.assetnumber });
 
     if (!asset) {
-      return NextResponse.json({ error: 'Facility asset not found' }, { status: 404 });
+      return apiJson({ error: 'Facility asset not found' }, { status: 404 });
     }
 
-    return NextResponse.json(asset);
+    return apiJson(asset);
   } catch (error) {
     console.error('Failed to fetch facility asset:', error);
-    return NextResponse.json({ error: 'Failed to fetch facility asset' }, { status: 500 });
+    return apiJson({ error: 'Failed to fetch facility asset' }, { status: 500 });
   }
 }
 
@@ -36,7 +37,7 @@ export async function PUT(
 
     const existing = await collection.findOne({ assetnumber });
     if (!existing) {
-      return NextResponse.json({ error: `Facility asset ${assetnumber} not found` }, { status: 404 });
+      return apiJson({ error: `Facility asset ${assetnumber} not found` }, { status: 404 });
     }
 
     const { _id, assetnumber: _skip, ...rest } = updateData;
@@ -70,7 +71,7 @@ export async function PUT(
           } else {
             const n = Number(v);
             if (Number.isNaN(n)) {
-              return NextResponse.json({ error: 'Acquired Value must be a valid number.' }, { status: 400 });
+              return apiJson({ error: 'Acquired Value must be a valid number.' }, { status: 400 });
             }
             $set[key] = n;
           }
@@ -80,7 +81,7 @@ export async function PUT(
           } else {
             const d = new Date(String(v));
             if (Number.isNaN(d.getTime())) {
-              return NextResponse.json({ error: `Invalid date for ${key}.` }, { status: 400 });
+              return apiJson({ error: `Invalid date for ${key}.` }, { status: 400 });
             }
             $set[key] = d;
           }
@@ -91,19 +92,19 @@ export async function PUT(
     }
 
     if (Object.keys($set).length === 0) {
-      return NextResponse.json(existing);
+      return apiJson(existing);
     }
 
     const updateResult = await collection.updateOne({ assetnumber }, { $set });
     if (updateResult.matchedCount === 0) {
-      return NextResponse.json({ error: 'Failed to update facility asset' }, { status: 500 });
+      return apiJson({ error: 'Failed to update facility asset' }, { status: 500 });
     }
 
     const updated = await collection.findOne({ assetnumber });
-    return NextResponse.json(updated);
+    return apiJson(updated);
   } catch (error) {
     console.error('Error updating facility asset:', error);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to update facility asset', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
@@ -123,12 +124,12 @@ export async function DELETE(
     const result = await db.collection(COLLECTION).deleteOne({ assetnumber });
 
     if (result.deletedCount === 0) {
-      return NextResponse.json({ error: 'Facility asset not found' }, { status: 404 });
+      return apiJson({ error: 'Facility asset not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true });
+    return apiJson({ success: true });
   } catch (error) {
     console.error('Error deleting facility asset:', error);
-    return NextResponse.json({ error: 'Failed to delete facility asset' }, { status: 500 });
+    return apiJson({ error: 'Failed to delete facility asset' }, { status: 500 });
   }
 }

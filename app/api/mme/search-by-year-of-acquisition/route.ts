@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 export async function GET(request: Request) {
   try {
@@ -7,7 +8,7 @@ export async function GET(request: Request) {
     const year = searchParams.get('year');
 
     if (!year?.trim()) {
-      return NextResponse.json([]);
+      return apiJson([]);
     }
 
     const { client } = await connectToDatabase();
@@ -27,7 +28,7 @@ export async function GET(request: Request) {
     } else {
       const yearNum = parseInt(year, 10);
       if (isNaN(yearNum) || yearNum < 2010 || yearNum > 2100) {
-        return NextResponse.json([]);
+        return apiJson([]);
       }
 
       // Create date range for the year
@@ -45,10 +46,10 @@ export async function GET(request: Request) {
 
     const assets = await targetDb.collection('equipmentandtools').find(query).toArray();
 
-    return NextResponse.json(assets);
+    return apiJson(assets);
   } catch (err) {
     console.error('Failed to fetch MME by year of acquisition:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to fetch MME equipment' },
       { status: 500 }
     );

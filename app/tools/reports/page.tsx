@@ -334,8 +334,11 @@ export default function ToolsReportsPage() {
   };
 
   const getTotalValue = () => {
-    return tools.reduce((sum, tool) => sum + (tool.toolCost || 0), 0);
+    return tools.reduce((sum, tool) => sum + (typeof tool.toolCost === 'number' ? tool.toolCost : 0), 0);
   };
+
+  // Guests see masked tool costs — totals/averages are meaningless then
+  const hasMaskedCosts = tools.some((tool) => (tool.toolCost as unknown) === '***');
 
   if (loading) {
     return (
@@ -599,10 +602,10 @@ export default function ToolsReportsPage() {
                         {tool.toolLocation}
                       </td>
                       <td className={`px-6 py-4 whitespace-nowrap text-sm ${backgroundStyles.tableCellTextSecondary}`}>
-                        {tool.toolCost ? new Intl.NumberFormat('en-US', {
+                        {(tool.toolCost as unknown) === '***' ? '***' : tool.toolCost ? new Intl.NumberFormat('en-US', {
                           style: 'currency',
                           currency: 'SAR'
-                        }).format(tool.toolCost) : 'N/A'}
+                        }).format(tool.toolCost as number) : 'N/A'}
                       </td>
                       <td className={`px-6 py-4 whitespace-nowrap text-sm ${backgroundStyles.tableCellTextSecondary}`}>
                         {tool.purchasedDate ? new Date(tool.purchasedDate).toLocaleDateString() : 'N/A'}
@@ -664,7 +667,7 @@ export default function ToolsReportsPage() {
                   <div className="flex justify-between items-center">
                     <span className={`text-sm ${backgroundStyles.summaryLabel}`}>Total Value:</span>
                     <span className={`text-sm font-semibold ${backgroundStyles.summaryValue}`}>
-                      {new Intl.NumberFormat('en-US', {
+                      {hasMaskedCosts ? '***' : new Intl.NumberFormat('en-US', {
                         style: 'currency',
                         currency: 'SAR'
                       }).format(totalValue)}
@@ -673,7 +676,7 @@ export default function ToolsReportsPage() {
                   <div className="flex justify-between items-center">
                     <span className={`text-sm ${backgroundStyles.summaryLabel}`}>Average Cost:</span>
                     <span className={`text-sm font-semibold ${backgroundStyles.summaryValue}`}>
-                      {tools.length > 0 ? new Intl.NumberFormat('en-US', {
+                      {hasMaskedCosts ? '***' : tools.length > 0 ? new Intl.NumberFormat('en-US', {
                         style: 'currency',
                         currency: 'SAR'
                       }).format(totalValue / tools.length) : 'N/A'}

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 export async function GET(request: Request) {
   try {
@@ -13,7 +14,7 @@ export async function GET(request: Request) {
     
     // Return empty array if serial number parameter is empty or null
     if (!serialNumber?.trim()) {
-      return NextResponse.json([]);
+      return apiJson([]);
     }
     
     // Build query: search for assetserialnumber containing the input string
@@ -168,10 +169,10 @@ export async function GET(request: Request) {
       });
     }
 
-    return NextResponse.json(filteredAssets);
+    return apiJson(filteredAssets);
   } catch (err) {
     console.error('Failed to fetch MME by serial number:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to fetch MME equipment' },
       { status: 500 }
     );

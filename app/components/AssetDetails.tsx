@@ -170,6 +170,7 @@ export default function AssetDetails({ asset, onUpdate, theme = 'default' }: Ass
   const pathname = usePathname();
   const isFixedAsset = pathname?.includes('/fixedasset/') ?? false;
   const { data: session, status } = useSession();
+  const isAdmin = (session?.user as { isAdmin?: boolean } | undefined)?.isAdmin === true;
 
   // Theme-based style helpers
   const getContainerStyles = () => {
@@ -464,9 +465,9 @@ export default function AssetDetails({ asset, onUpdate, theme = 'default' }: Ass
         </div>
       )}
 
-      {/* Edit/Save/Cancel buttons */}
+      {/* Edit/Save/Cancel buttons — admins only */}
       <div className="absolute top-3 right-3 flex gap-2">
-        {session && (
+        {isAdmin && (
           !isEditing ? (
             <button
               onClick={handleEdit}
@@ -525,12 +526,12 @@ export default function AssetDetails({ asset, onUpdate, theme = 'default' }: Ass
           <label className={`block text-xs font-medium ${fieldStyles.label}`}>Acquisition Value</label>
           <div className={`text-[12px] ${fieldStyles.text}`}>
             {session ? (
-              new Intl.NumberFormat('en-US', {
+              (asset.acquiredvalue as unknown) === '***' ? '***' : new Intl.NumberFormat('en-US', {
                 style: 'currency',
                 currency: 'SAR'
               }).format(asset.acquiredvalue ?? 0)
             ) : (
-              'SAR *******'
+              '***'
             )}
           </div>
         </div>

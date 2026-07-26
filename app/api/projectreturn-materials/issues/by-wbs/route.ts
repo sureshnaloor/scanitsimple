@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../../auth/[...nextauth]/auth';
+import { apiJson } from '@/lib/api-response';
 
 // Function to calculate unit rate at time of issue based on age
 function calculateUnitRateAtIssue(
@@ -42,8 +43,8 @@ export async function GET() {
     // Check authentication
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
+      return apiJson(
+        { error: 'Unauthorized: sign in before using this feature' },
         { status: 401 }
       );
     }
@@ -96,10 +97,10 @@ export async function GET() {
       })
     );
 
-    return NextResponse.json(issuesWithMaterialDetails);
+    return apiJson(issuesWithMaterialDetails);
   } catch (err) {
     console.error('Failed to fetch issues by WBS:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to fetch issues by WBS' },
       { status: 500 }
     );

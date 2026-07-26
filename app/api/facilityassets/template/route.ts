@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
+import { apiJson } from '@/lib/api-response';
 
 export async function GET() {
   try {
@@ -49,7 +50,7 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Error generating facility assets template:', error);
-    return NextResponse.json(
+    return apiJson(
       { success: false, error: 'Failed to generate facility assets template' },
       { status: 500 }
     );

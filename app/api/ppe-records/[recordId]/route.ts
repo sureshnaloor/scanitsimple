@@ -4,6 +4,7 @@ import { authOptions } from '../../auth/[...nextauth]/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { PPEIssueRecord, PPEStockBalanceInsert, PPETransactionInsert, Employee, PPEMaster } from '@/types/ppe';
+import { apiJson } from '@/lib/api-response';
 
 // PUT - Update an existing PPE issue record (adjust stock by delta via new transaction)
 export async function PUT(
@@ -13,7 +14,7 @@ export async function PUT(
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      return apiJson({ success: false, error: 'Unauthorized: sign in before using this feature' }, { status: 401 });
     }
 
     const { recordId } = params;
@@ -40,7 +41,7 @@ export async function PUT(
 
     const existing = await recordsCollection.findOne({ _id: new ObjectId(recordId) }) as PPEIssueRecord | null;
     if (!existing) {
-      return NextResponse.json({ success: false, error: 'Record not found' }, { status: 404 });
+      return apiJson({ success: false, error: 'Record not found' }, { status: 404 });
     }
 
     // Basic field updates on the record
@@ -178,13 +179,13 @@ export async function PUT(
         );
       });
 
-      return NextResponse.json({ success: true, message: 'Record updated' });
+      return apiJson({ success: true, message: 'Record updated' });
     } finally {
       await dbSession.endSession();
     }
   } catch (error: any) {
     console.error('Error updating PPE issue record:', error);
-    return NextResponse.json({ success: false, error: error.message || 'Failed to update record' }, { status: 500 });
+    return apiJson({ success: false, error: error.message || 'Failed to update record' }, { status: 500 });
   }
 }
 
@@ -196,7 +197,7 @@ export async function DELETE(
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      return apiJson({ success: false, error: 'Unauthorized: sign in before using this feature' }, { status: 401 });
     }
 
     const { recordId } = params;
@@ -207,7 +208,7 @@ export async function DELETE(
 
     const existing = await recordsCollection.findOne({ _id: new ObjectId(recordId) }) as PPEIssueRecord | null;
     if (!existing) {
-      return NextResponse.json({ success: false, error: 'Record not found' }, { status: 404 });
+      return apiJson({ success: false, error: 'Record not found' }, { status: 404 });
     }
 
     const dbSession = await client.startSession();
@@ -244,13 +245,13 @@ export async function DELETE(
         await recordsCollection.deleteOne({ _id: new ObjectId(recordId) }, { session: dbSession });
       });
 
-      return NextResponse.json({ success: true, message: 'Record deleted' });
+      return apiJson({ success: true, message: 'Record deleted' });
     } finally {
       await dbSession.endSession();
     }
   } catch (error: any) {
     console.error('Error deleting PPE issue record:', error);
-    return NextResponse.json({ success: false, error: error.message || 'Failed to delete record' }, { status: 500 });
+    return apiJson({ success: false, error: error.message || 'Failed to delete record' }, { status: 500 });
   }
 }
 

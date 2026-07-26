@@ -1,41 +1,83 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 
-import AssetDetails from '@/app/components/AssetDetails';
-import CalibrationDetails from '@/app/components/CalibrationDetails';
-import CustodyDetails from '@/app/components/CustodyDetails';
+import { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { Wrench, Tag, MapPin, Calendar } from 'lucide-react';
+
+import AssetDetails from '../../components/AssetDetails';
+import CalibrationDetails from '../../components/CalibrationDetails';
+import CustodyDetails from '../../components/CustodyDetails';
 import CustomDetailsSection from '@/app/components/CustomDetailsSection';
-
-
+import FixedAssetBreadcrumb from '@/app/components/fixedasset/FixedAssetBreadcrumb';
+import FixedAssetSection from '@/app/components/fixedasset/FixedAssetSection';
+import FixedAssetStatusBadge from '@/app/components/fixedasset/FixedAssetStatusBadge';
+import { AssetQRCode } from '@/components/AssetQRCode';
 import { AssetData, Calibration } from '@/types/asset';
 import { Custody } from '@/types/custody';
+import FixedAssetDetailShell from '@/app/components/fixedasset/FixedAssetDetailShell';
+import { fap, formatCurrency } from '@/lib/fixedAssetPageDesign';
 
-import CollapsibleSection from '@/app/components/CollapsibleSection';
-import type { Theme } from '@/app/components/AssetDetails';
+type MMEDetail = AssetData & {
+  location?: string;
+  department?: string;
+  acquireddate?: string | Date | null;
+  acquiredvalue?: number | null;
+};
 
-export default function AssetPage({ params }: { params: { assetnumber: string } }) {
+function dOut(v: string | Date | null | undefined): string {
+  if (v === null || v === undefined || v === '') return '—';
+  const d = typeof v === 'string' ? new Date(v) : v;
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+export default function AssetPage() {
   const router = useRouter();
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const particlesRef = useRef<Array<{
-    x: number;
-    y: number;
-    vx: number;
-    vy: number;
-    radius: number;
-  }>>([]);
-  const animationFrameRef = useRef<number>();
+  const params = useParams();
+  const assetnumber = typeof params?.assetnumber === 'string' ? params.assetnumber : '';
 
-  const [asset, setAsset] = useState<AssetData | null>(null);
+  const [asset, setAsset] = useState<MMEDetail | null>(null);
   const [calibrations, setCalibrations] = useState<Calibration[]>([]);
-  const [custodyRecords, setCustodyRecords] = useState([]);
+  const [custodyRecords, setCustodyRecords] = useState<Custody[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [theme, setTheme] = useState<Theme>('default');
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const [assetRes, calibrationData, custodyData] = await Promise.all([
+        fetch(`/api/assets/${assetnumber}`),
+        fetch(`/api/calibrations/${assetnumber}`).then((res) => res.json()),
+        fetch(`/api/custody/${assetnumber}`).then((res) => res.json()),
+      ]);
+
+      if (!assetRes.ok) {
+        const body = await assetRes.json().catch(() => ({}));
+        throw new Error(body.error || 'Failed to load asset data');
+      }
+      const assetData = await assetRes.json();
+
+      setAsset(assetData);
+      // The calibration/custody APIs return a 404 { error } body when no
+      // records exist — treat those as empty history, not errors.
+      setCalibrations(Array.isArray(calibrationData) ? calibrationData : []);
+      setCustodyRecords(Array.isArray(custodyData) ? custodyData : []);
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load asset data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    fetchData();
-  }, [params.assetnumber]);
+    if (assetnumber) {
+      fetchData();
+    }
+  }, [assetnumber]);
 
   useEffect(() => {
     if (loading) return;
@@ -46,132 +88,13 @@ export default function AssetPage({ params }: { params: { assetnumber: string } 
     }
   }, [loading]);
 
-  // Animated particle background for glassmorphic theme
-  useEffect(() => {
-    if (theme !== 'glassmorphic') {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-      return;
-    }
-
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-
-    resizeCanvas();
-
-    particlesRef.current = [];
-    for (let i = 0; i < 50; i++) {
-      particlesRef.current.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        vx: (Math.random() - 0.5) * 0.5,
-        vy: (Math.random() - 0.5) * 0.5,
-        radius: Math.random() * 3 + 1
-      });
-    }
-
-    const animate = () => {
-      if (!ctx || !canvas || theme !== 'glassmorphic') return;
-      
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      particlesRef.current.forEach((particle, i) => {
-        particle.x += particle.vx;
-        particle.y += particle.vy;
-
-        if (particle.x < 0 || particle.x > canvas.width) particle.vx *= -1;
-        if (particle.y < 0 || particle.y > canvas.height) particle.vy *= -1;
-
-        ctx.beginPath();
-        ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(45, 212, 191, 0.6)';
-        ctx.fill();
-
-        particlesRef.current.forEach((otherParticle, j) => {
-          if (i !== j) {
-            const dx = particle.x - otherParticle.x;
-            const dy = particle.y - otherParticle.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-
-            if (distance < 100) {
-              ctx.beginPath();
-              ctx.moveTo(particle.x, particle.y);
-              ctx.lineTo(otherParticle.x, otherParticle.y);
-              ctx.strokeStyle = `rgba(45, 212, 191, ${0.3 * (1 - distance / 100)})`;
-              ctx.lineWidth = 1;
-              ctx.stroke();
-            }
-          }
-        });
-      });
-
-      animationFrameRef.current = requestAnimationFrame(animate);
-    };
-
-    animate();
-
-    const handleResize = () => {
-      resizeCanvas();
-    };
-
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
-  }, [theme]);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const [assetData, calibrationData, custodyData] = await Promise.all([
-        fetch(`/api/assets/${params.assetnumber}`).then(res => res.json()),
-        fetch(`/api/calibrations/${params.assetnumber}`).then(res => res.json()),
-        fetch(`/api/custody/${params.assetnumber}`).then(res => res.json())
-      ]);
-
-      setAsset(assetData);
-      setCalibrations(calibrationData);
-      setCustodyRecords(custodyData);
-
-        // for testing only, will be removed later in production
-      console.log('Calibrations:', calibrations);
-      console.log('Custody Records:', custodyRecords);
-      console.log('Asset:', asset);
-
-    } catch (err) {
-      console.error('Error fetching data:', err);
-      setError('Failed to load asset data');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleAssetUpdate = async (updatedAsset: Partial<AssetData>) => {
     try {
-      console.log('Updating asset:', params.assetnumber);
-
-      // Updated payload to include new fields
       const updatePayload = {
         assetcategory: updatedAsset.assetcategory,
         assetsubcategory: updatedAsset.assetsubcategory,
         assetstatus: updatedAsset.assetstatus,
         assetnotes: updatedAsset.assetnotes,
-        
         assetmodel: updatedAsset.assetmodel,
         assetmanufacturer: updatedAsset.assetmanufacturer,
         assetserialnumber: updatedAsset.assetserialnumber,
@@ -180,11 +103,11 @@ export default function AssetPage({ params }: { params: { assetnumber: string } 
         anyotheridentifier: updatedAsset.anyotheridentifier,
       };
 
-      const res = await fetch(`/api/assets/${params.assetnumber}`, {
+      const res = await fetch(`/api/assets/${assetnumber}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
         body: JSON.stringify(updatePayload),
       });
@@ -195,176 +118,204 @@ export default function AssetPage({ params }: { params: { assetnumber: string } 
         console.error('Update failed:', {
           status: res.status,
           statusText: res.statusText,
-          data
+          data,
         });
         throw new Error(data.error || `Failed to update asset: ${res.status}`);
       }
 
-      // Update local state with new data
-      setAsset(prevAsset => {
+      setAsset((prevAsset) => {
         if (!prevAsset) return data;
-        return { 
-          ...prevAsset, 
-          ...updatePayload
+        return {
+          ...prevAsset,
+          ...updatePayload,
         };
       });
-
-      console.log('Asset updated successfully');
-      // for testing only, will be removed later in production
-      console.log('Updated Asset:', asset);
-
-    } catch (error) {
-      console.error('Error updating asset:', error);
-      throw error;
+    } catch (err) {
+      console.error('Error updating asset:', err);
+      throw err;
     }
   };
 
   const handleCalibrationUpdate = async (calibration: Calibration | null) => {
     try {
       if (!calibration) return;
-      const response = await fetch(`/api/calibrations/${params.assetnumber}`);
+      const response = await fetch(`/api/calibrations/${assetnumber}`);
       if (!response.ok) throw new Error('Failed to fetch updated calibrations');
       const newCalibrationData = await response.json();
-      setCalibrations(newCalibrationData);
-    } catch (error) {
-      console.error('Error updating calibrations:', error);
+      setCalibrations(Array.isArray(newCalibrationData) ? newCalibrationData : []);
+    } catch (err) {
+      console.error('Error updating calibrations:', err);
     }
   };
 
   const handleCustodyUpdate = async (custody: Custody | null) => {
     try {
-      // Refresh the custody records
-      const response = await fetch(`/api/custody/${params.assetnumber}`);
-      if (!response.ok) throw new Error('Failed to fetch custody records');
+      const response = await fetch(`/api/custody/${assetnumber}`);
+      if (!response.ok) {
+        throw new Error(
+          response.status === 404 ? 'No custody records maintained' : 'Failed to fetch custody records'
+        );
+      }
       const updatedRecords = await response.json();
-      
-      setCustodyRecords(updatedRecords);
-    } catch (error) {
-      console.error('Error updating custody records:', error);
+      setCustodyRecords(Array.isArray(updatedRecords) ? updatedRecords : []);
+    } catch (err) {
+      console.error('Error updating custody records:', err);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  if (error || !asset) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-red-500 text-lg">{error || 'Asset not found'}</div>
-      </div>
-    );
-  }
 
   const handleLogLocation = () => {
-    router.push(`/loglocation?asset=${params.assetnumber}&source=asset`);
+    router.push(`/loglocation?asset=${assetnumber}&source=asset`);
   };
 
-  // Theme-based background and container styles
-  const getBackgroundStyles = () => {
-    switch (theme) {
-      case 'glassmorphic':
-        return {
-          container: 'relative min-h-screen overflow-hidden bg-gradient-to-br from-[#1a2332] via-[#2d3748] to-[#1a2332]',
-          overlay: null,
-          textColor: 'text-white'
-        };
-      case 'light':
-        return {
-          container: 'relative flex flex-col min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-gray-100',
-          overlay: null,
-          textColor: 'text-gray-900'
-        };
-      default:
-        return {
-          container: 'relative flex flex-col min-h-screen text-zinc-100',
-          overlay: 'fixed inset-0 z-0 bg-[conic-gradient(at_top_right,_#111111,_#1e40af,_#eeef46)] opacity-50',
-          textColor: 'text-zinc-100'
-        };
-    }
-  };
-
-  const backgroundStyles = getBackgroundStyles();
+  if (!assetnumber) {
+    return (
+      <FixedAssetDetailShell>
+        <p className={fap.textPrimary}>Invalid asset.</p>
+      </FixedAssetDetailShell>
+    );
+  }
 
   return (
-    <div className={backgroundStyles.container}>
-      {/* Animated background canvas for glassmorphic theme */}
-      {theme === 'glassmorphic' && (
-        <canvas ref={canvasRef} className="absolute inset-0 z-10" />
-      )}
-      
-      {/* Default theme overlay */}
-      {theme === 'default' && backgroundStyles.overlay && (
-        <div className={backgroundStyles.overlay} />
-      )}
-      
-      <div className={`relative ${theme === 'glassmorphic' ? 'z-20' : 'z-10'} flex flex-col min-h-screen`}>
-        <main className={`flex-1 flex flex-col items-center justify-center p-2 gap-4 ${backgroundStyles.textColor}`}>
-          <CollapsibleSection 
-            title="Asset Details" 
-            theme={theme}
-            onThemeChange={setTheme}
-            showThemeSwitcher={true}
-          >
-            <AssetDetails 
-              asset={asset} 
-              onUpdate={handleAssetUpdate}
-              theme={theme}
-            />
-          </CollapsibleSection>
+    <FixedAssetDetailShell>
+        <FixedAssetBreadcrumb
+          items={[
+            { label: 'MME Equipment', href: '/mme' },
+            { label: assetnumber },
+          ]}
+        />
 
-          <CollapsibleSection 
-            title="Calibration Details"
-            theme={theme}
-            sectionId="calibration"
-          >
-            <CalibrationDetails 
-              currentCalibration={Array.isArray(calibrations) && calibrations.length > 0 ? calibrations[0] : null}
-              calibrationHistory={Array.isArray(calibrations) && calibrations.length > 1 ? calibrations.slice(1) : []}
-              onUpdate={handleCalibrationUpdate}
-              assetnumber={params.assetnumber}
-              theme={theme}
-            />
-          </CollapsibleSection>
+        {loading && (
+          <div className="flex justify-center py-20">
+            <div className={fap.spinner} />
+          </div>
+        )}
 
-          <CollapsibleSection 
-            title="Custody Details"
-            theme={theme}
-            sectionId="custody"
-          >
-            <CustodyDetails 
-              currentCustody={custodyRecords.length > 0 ? custodyRecords[0] : null}
-              custodyHistory={custodyRecords.length > 1 ? custodyRecords.slice(1) : []}
-              onUpdate={handleCustodyUpdate}
-              assetnumber={params.assetnumber}
-              theme={theme}
-              custodyNewHref={`/asset/${params.assetnumber}/custody/new`}
-            />
-          </CollapsibleSection>
+        {!loading && error && <div className={fap.errorBox}>{error}</div>}
 
-          <CustomDetailsSection assetType="mme" assetnumber={params.assetnumber} />
+        {!loading && asset && (
+          <>
+            <div className={`${fap.card} ${fap.cardPadding} mb-8`}>
+              <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+                <div className={fap.iconBox}>
+                  <Wrench className="h-12 w-12 text-[#00B4D8]" strokeWidth={1.5} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <span className={fap.idBadge}>
+                    <Tag className="h-3.5 w-3.5" />
+                    {asset.assetnumber}
+                  </span>
+                  <h1 className="mt-3 text-2xl font-bold text-[#0F172A] dark:text-[#F8F9FA] md:text-4xl">
+                    {asset.assetdescription || '—'}
+                  </h1>
+                  <div className="mt-3 flex flex-wrap items-center gap-3">
+                    {asset.assetcategory ? (
+                      <span className="rounded-full bg-[rgba(0,180,216,0.15)] px-3 py-1 text-xs font-semibold text-[#00B4D8]">
+                        {asset.assetcategory}
+                      </span>
+                    ) : null}
+                    <FixedAssetStatusBadge status={asset.assetstatus ?? ''} />
+                    <span className="text-base font-bold text-[#0F172A] dark:text-[#F8F9FA]">
+                      {formatCurrency(asset.acquiredvalue)}
+                    </span>
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-6 text-sm">
+                    <div className="flex items-start gap-2 text-[#475569] dark:text-[#94A3B8]">
+                      <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-[#64748B]">Location</p>
+                        <p className="text-[#0F172A] dark:text-[#F8F9FA]">{asset.location || '—'}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-[#64748B]">Department</p>
+                      <p className="text-[#0F172A] dark:text-[#F8F9FA]">{asset.department || '—'}</p>
+                    </div>
+                    <div className="flex items-start gap-2 text-[#475569] dark:text-[#94A3B8]">
+                      <Calendar className="mt-0.5 h-4 w-4 shrink-0" />
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-[#64748B]">Acquired</p>
+                        <p className="text-[#0F172A] dark:text-[#F8F9FA]">{dOut(asset.acquireddate)}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-          <button
-            onClick={handleLogLocation}
-            className={`py-2 px-6 rounded-lg shadow-lg transition-colors duration-200 flex items-center gap-2 mt-4 ${
-              theme === 'glassmorphic'
-                ? 'bg-teal-500 hover:bg-teal-600 text-white'
-                : theme === 'light'
-                ? 'bg-blue-500 hover:bg-blue-600 text-white'
-                : 'bg-blue-500 hover:bg-blue-600 text-white'
-            }`}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-            </svg>
-            Log Location
-          </button>
-        </main>
-      </div>
-    </div>
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
+              <div className="space-y-6">
+                <FixedAssetSection title="Asset Details" defaultExpanded>
+                  <AssetDetails asset={asset} onUpdate={handleAssetUpdate} />
+                </FixedAssetSection>
+
+                <FixedAssetSection title="Calibration Details" sectionId="calibration" defaultExpanded>
+                  <CalibrationDetails
+                    currentCalibration={calibrations.length > 0 ? calibrations[0] : null}
+                    calibrationHistory={calibrations.length > 1 ? calibrations.slice(1) : []}
+                    onUpdate={handleCalibrationUpdate}
+                    assetnumber={assetnumber}
+                  />
+                </FixedAssetSection>
+
+                <FixedAssetSection title="Custody Details" sectionId="custody" defaultExpanded>
+                  <CustodyDetails
+                    currentCustody={custodyRecords.length > 0 ? custodyRecords[0] : null}
+                    custodyHistory={custodyRecords.length > 1 ? custodyRecords.slice(1) : []}
+                    onUpdate={handleCustodyUpdate}
+                    assetnumber={assetnumber}
+                    custodyNewHref={`/asset/${assetnumber}/custody/new`}
+                  />
+                </FixedAssetSection>
+
+                <CustomDetailsSection assetType="mme" assetnumber={assetnumber} />
+              </div>
+
+              <aside className={`${fap.sidebarSticky} space-y-4`}>
+                <div className={`${fap.card} ${fap.cardPadding} text-center`}>
+                  <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-[#64748B]">QR Code</h2>
+                  <div className="mx-auto inline-flex rounded-xl bg-white p-4">
+                    <AssetQRCode
+                      assetNumber={asset.assetnumber}
+                      assetDescription={asset.assetdescription}
+                      assetType="mme"
+                    />
+                  </div>
+                  <p className="mt-4 font-mono text-sm text-[#00B4D8]">{asset.assetnumber}</p>
+                  <p className="mt-1 text-xs text-[#64748B]">Scan to view this asset</p>
+                </div>
+
+                <div className={`${fap.card} ${fap.cardPadding}`}>
+                  <h2 className="mb-3 text-sm font-semibold text-[#0F172A] dark:text-[#F8F9FA]">Quick info</h2>
+                  <dl className="space-y-3 text-sm">
+                    <div>
+                      <dt className={fap.fieldLabel}>Subcategory</dt>
+                      <dd className="text-[#0F172A] dark:text-[#F8F9FA]">{asset.assetsubcategory || '—'}</dd>
+                    </div>
+                    <div>
+                      <dt className={fap.fieldLabel}>Model</dt>
+                      <dd className="text-[#0F172A] dark:text-[#F8F9FA]">{asset.assetmodel || '—'}</dd>
+                    </div>
+                    <div>
+                      <dt className={fap.fieldLabel}>Manufacturer</dt>
+                      <dd className="text-[#0F172A] dark:text-[#F8F9FA]">{asset.assetmanufacturer || '—'}</dd>
+                    </div>
+                    <div>
+                      <dt className={fap.fieldLabel}>Serial number</dt>
+                      <dd className="text-[#0F172A] dark:text-[#F8F9FA]">{asset.assetserialnumber || '—'}</dd>
+                    </div>
+                  </dl>
+                  <button type="button" onClick={handleLogLocation} className={`${fap.btnPrimary} mt-4 w-full`}>
+                    <MapPin className="h-4 w-4" />
+                    Log Location
+                  </button>
+                  <Link href="/mme" className={`${fap.btnSecondary} mt-3 w-full`}>
+                    Back to list
+                  </Link>
+                </div>
+              </aside>
+            </div>
+          </>
+        )}
+    </FixedAssetDetailShell>
   );
 }

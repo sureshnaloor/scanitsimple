@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { PPEIssueRecord } from '@/types/ppe';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toaster';
@@ -11,6 +12,7 @@ import ResponsiveTable from '@/components/ui/responsive-table';
 import SearchableEmployeeSelect from '@/components/SearchableEmployeeSelect';
 import SearchablePPESelect from '@/components/SearchablePPESelect';
 import { useAppTheme } from '@/app/contexts/ThemeContext';
+import { useAccess } from '@/lib/use-access';
 
 interface PPEIssueFormData {
   userEmpNumber: string;
@@ -32,6 +34,7 @@ interface ItemRow {
 
 export default function PPEIssueRecordsPage() {
   const { theme } = useAppTheme();
+  const { isAdmin } = useAccess();
   const [issueRecords, setIssueRecords] = useState<PPEIssueRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -519,23 +522,27 @@ export default function PPEIssueRecordsPage() {
       additionalDetails: additionalDetailsElement,
       isFirstIssue: record.isFirstIssue ? 'Yes' : 'No',
       issueAgainstDue: record.issueAgainstDue ? 'Due' : 'Damage',
-      actions: (
-        <div className="flex gap-2">
+      actions: isAdmin ? (
+        <div className="flex items-center gap-2">
           <button
             onClick={() => handleEdit(record)}
-            className={`px-4 py-2 ${backgroundStyles.buttonSecondary} rounded-lg transition-all duration-300 text-sm font-medium`}
+            className={`p-1 ${backgroundStyles.buttonSecondary} rounded-lg transition-all duration-300`}
+            title="Edit issue record"
+            aria-label="Edit issue record"
           >
-            Edit
+            <Pencil className="h-4 w-4" />
           </button>
           <button
             onClick={() => handleDelete(record)}
             disabled={deleteLoadingId === record._id}
-            className={`px-4 py-2 ${backgroundStyles.buttonDelete} rounded-lg transition-all duration-300 text-sm font-medium ${backgroundStyles.buttonDisabled}`}
+            className={`p-1 ${backgroundStyles.buttonDelete} rounded-lg transition-all duration-300 ${backgroundStyles.buttonDisabled}`}
+            title={deleteLoadingId === record._id ? 'Deleting...' : 'Delete issue record'}
+            aria-label="Delete issue record"
           >
-            {deleteLoadingId === record._id ? 'Deleting...' : 'Delete'}
+            <Trash2 className="h-4 w-4" />
           </button>
         </div>
-      )
+      ) : null
     };
   });
 
@@ -565,12 +572,14 @@ export default function PPEIssueRecordsPage() {
               >
                 Issue Records
               </TabsTrigger>
-              <TabsTrigger 
-                className={`${backgroundStyles.tabsTrigger} transition-all duration-300`}
-                value="form"
-              >
-                Issue New PPE
-              </TabsTrigger>
+              {isAdmin && (
+                <TabsTrigger 
+                  className={`${backgroundStyles.tabsTrigger} transition-all duration-300`}
+                  value="form"
+                >
+                  Issue New PPE
+                </TabsTrigger>
+              )}
             </TabsList>
 
             <TabsContent value="list">

@@ -1,5 +1,6 @@
 'use client';
 import { SessionProvider } from 'next-auth/react';
+import { AdminGate } from '@/components/access/AdminGate';
 
 export default function AdminLayout({
   children,
@@ -8,7 +9,7 @@ export default function AdminLayout({
 }) {
   return (
     <SessionProvider>
-      {children}
+      <AdminGate>{children}</AdminGate>
     </SessionProvider>
   );
 }

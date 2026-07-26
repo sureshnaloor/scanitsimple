@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { PPEMaster } from '@/types/ppe';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ResponsiveTable from '@/components/ui/responsive-table';
 import { useAppTheme } from '@/app/contexts/ThemeContext';
+import { useAccess } from '@/lib/use-access';
 
 interface PPEFormData {
   ppeId: string;
@@ -19,6 +21,7 @@ interface PPEFormData {
 
 export default function PPEMasterPage() {
   const { theme } = useAppTheme();
+  const { isAdmin } = useAccess();
   const [ppeRecords, setPPERecords] = useState<PPEMaster[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -337,22 +340,26 @@ export default function PPEMasterPage() {
     ...ppe,
     life: `${ppe.life} ${ppe.lifeUOM}`,
     isActive: ppe.isActive ? 'Yes' : 'No',
-    actions: (
-      <div className="flex gap-2">
+    actions: isAdmin ? (
+      <div className="flex items-center gap-2">
         <button
           onClick={() => handleEdit(ppe)}
-          className={`px-4 py-2 ${styles.buttonSecondary} rounded-lg transition-all duration-300 text-sm font-medium`}
+          className={`p-1 ${styles.buttonSecondary} rounded-lg transition-all duration-300`}
+          title="Edit PPE"
+          aria-label="Edit PPE"
         >
-          Edit
+          <Pencil className="h-4 w-4" />
         </button>
         <button
           onClick={() => handleDelete(ppe.ppeId)}
-          className={`px-4 py-2 ${styles.buttonDanger} rounded-lg transition-all duration-300 text-sm font-medium`}
+          className={`p-1 ${styles.buttonDanger} rounded-lg transition-all duration-300`}
+          title="Delete PPE"
+          aria-label="Delete PPE"
         >
-          Delete
+          <Trash2 className="h-4 w-4" />
         </button>
       </div>
-    )
+    ) : null
   }));
 
   return (
@@ -381,12 +388,14 @@ export default function PPEMasterPage() {
               >
                 PPE List
               </TabsTrigger>
-              <TabsTrigger 
-                className={`rounded-lg px-6 py-2 text-sm font-medium data-[state=active]:${styles.tabsActive} data-[state=inactive]:${styles.tabsInactive} transition-all duration-300`}
-                value="form"
-              >
-                {editingPPE ? 'Edit PPE' : 'Add New PPE'}
-              </TabsTrigger>
+              {isAdmin && (
+                <TabsTrigger 
+                  className={`rounded-lg px-6 py-2 text-sm font-medium data-[state=active]:${styles.tabsActive} data-[state=inactive]:${styles.tabsInactive} transition-all duration-300`}
+                  value="form"
+                >
+                  {editingPPE ? 'Edit PPE' : 'Add New PPE'}
+                </TabsTrigger>
+              )}
             </TabsList>
 
             <TabsContent value="list">
@@ -402,12 +411,14 @@ export default function PPEMasterPage() {
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className={`px-4 py-2 ${styles.input} rounded-xl focus:outline-none focus:ring-2 focus:border-transparent transition-all text-sm`}
                       />
-                      <button
-                        onClick={() => setActiveTab('form')}
-                        className={`px-6 py-2 ${styles.buttonPrimary} rounded-xl font-semibold transition-all duration-300 text-sm`}
-                      >
-                        Add New PPE
-                      </button>
+                      {isAdmin && (
+                        <button
+                          onClick={() => setActiveTab('form')}
+                          className={`px-6 py-2 ${styles.buttonPrimary} rounded-xl font-semibold transition-all duration-300 text-sm`}
+                        >
+                          Add New PPE
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

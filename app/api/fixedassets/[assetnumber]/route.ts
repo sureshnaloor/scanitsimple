@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 const FIXED_ASSET_MANUFACTURERS = 'FIXED_ASSET_MANUFACTURERS';
 
@@ -14,16 +15,16 @@ export async function GET(
       .findOne({ assetnumber: params.assetnumber });
 
     if (!asset) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'Fixed asset not found' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(asset);
+    return apiJson(asset);
   } catch (error) {
     console.error('Failed to fetch fixed asset:', error);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to fetch fixed asset' },
       { status: 500 }
     );
@@ -47,21 +48,29 @@ export async function PUT(
 
     if (!existingAsset) {
       console.error('Fixed asset not found in database:', assetnumber);
-      return NextResponse.json(
+      return apiJson(
         { error: `Fixed asset ${assetnumber} not found` },
         { status: 404 }
       );
     }
 
-    // Remove immutable and protected fields
+    // Remove immutable and protected fields (assetnumber/_id can never change;
+    // everything else is editable by admins via the row-edit dialog)
     const {
       _id,
       assetnumber: _an,
-      acquireddate,
-      acquiredvalue,
-      assetdescription,
       ...updateFields
     } = updateData;
+
+    // Coerce basic numeric/date fields when present
+    if (Object.prototype.hasOwnProperty.call(updateFields, 'acquiredvalue')) {
+      const num = Number(updateFields.acquiredvalue);
+      updateFields.acquiredvalue = Number.isNaN(num) ? null : num;
+    }
+    if (Object.prototype.hasOwnProperty.call(updateFields, 'acquireddate')) {
+      const d = new Date(updateFields.acquireddate);
+      updateFields.acquireddate = Number.isNaN(d.getTime()) ? null : d;
+    }
 
     if (Object.prototype.hasOwnProperty.call(updateFields, 'assetmanufacturer')) {
       const next = String(updateFields.assetmanufacturer ?? '').trim();
@@ -69,7 +78,7 @@ export async function PUT(
       if (next !== prev && next !== '') {
         const found = await db.collection(FIXED_ASSET_MANUFACTURERS).findOne({ name: next });
         if (!found) {
-          return NextResponse.json(
+          return apiJson(
             {
               error:
                 'Invalid manufacturer. Choose a value from the master list (Fixed Asset → Manufacturer), or add it there first.',
@@ -93,18 +102,18 @@ export async function PUT(
 
     if (!updatedAsset) {
       console.error('Update failed for fixed asset:', assetnumber);
-      return NextResponse.json(
+      return apiJson(
         { error: 'Failed to update fixed asset' },
         { status: 500 }
       );
     }
 
     console.log('Fixed asset updated successfully:', updatedAsset);
-    return NextResponse.json(updatedAsset);
+    return apiJson(updatedAsset);
 
   } catch (error) {
     console.error('Error in fixed asset update:', error);
-    return NextResponse.json(
+    return apiJson(
       { 
         error: 'Failed to update fixed asset',
         details: error instanceof Error ? error.message : 'Unknown error'

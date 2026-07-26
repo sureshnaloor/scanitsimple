@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 export async function GET(request: Request) {
   try {
@@ -131,10 +132,10 @@ export async function GET(request: Request) {
       }
     }
 
-    return NextResponse.json(results);
+    return apiJson(results);
   } catch (err) {
     console.error('Failed to fetch fixed assets without custodian:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to fetch fixed assets without custodian' },
       { status: 500 }
     );

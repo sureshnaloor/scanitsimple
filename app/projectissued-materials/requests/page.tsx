@@ -7,10 +7,12 @@ import {
 } from '@tanstack/react-table';
 import { ArrowUpDown, Package, Eye, CheckCircle, XCircle } from 'lucide-react';
 import ResponsiveTanStackTable from '@/components/ui/responsive-tanstack-table';
+import { useAccess } from '@/lib/use-access';
 import { MaterialRequest } from '@/types/projectissuedmaterials';
 import MaterialIssueForm from '@/components/MaterialIssueForm';
 
 export default function MaterialRequestsPage() {
+  const { isAdmin } = useAccess();
   const [data, setData] = useState<MaterialRequest[]>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -204,7 +206,10 @@ export default function MaterialRequestsPage() {
         const request = row.original;
         const isPending = request.status === 'pending';
         const isApproved = request.status === 'approved';
-        
+
+        // Approve / reject / issue are write actions — admins only
+        if (!isAdmin) return null;
+
         return (
           <div className="flex items-center gap-2">
             {isPending && (

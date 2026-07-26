@@ -10,6 +10,7 @@ import type { Theme } from '@/app/components/AssetDetails';
 import CustodyLocationFields from '@/app/components/CustodyLocationFields';
 import type { CustodyLocationType } from '@/lib/custodyLocation';
 import { displayCustodyLocationType, normalizeCustodyLocationType } from '@/lib/custodyLocation';
+import { useAccess } from '@/lib/use-access';
 
 interface CustodyDetailsProps {
   currentCustody: Custody | null;
@@ -72,6 +73,7 @@ export default function CustodyDetails({
   custodyNewHref,
 }: CustodyDetailsProps) {
   const newCustodyLink = custodyNewHref ?? `/fixedasset/${assetnumber}/custody/new`;
+  const { isAdmin } = useAccess();
   const [showEditModal, setShowEditModal] = useState(false);
   const [showErrorCorrectionModal, setShowErrorCorrectionModal] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -565,7 +567,7 @@ export default function CustodyDetails({
       <div className="flex justify-between items-center mb-4">
         <h2 className={`text-sm font-semibold ${getTextStyles()}`}>Current Custody</h2>
         <div className="flex gap-2">
-          {canCreateNewCustody && (
+          {isAdmin && canCreateNewCustody && (
             <Link
               href={newCustodyLink}
               className={getButtonStyles('blue')}
@@ -574,7 +576,7 @@ export default function CustodyDetails({
               <PlusIcon className="h-5 w-5" />
             </Link>
           )}
-          {currentCustody && !currentCustody.custodyto && (
+          {isAdmin && currentCustody && !currentCustody.custodyto && (
             <>
               <button
                 onClick={() => setShowErrorCorrectionModal(true)}

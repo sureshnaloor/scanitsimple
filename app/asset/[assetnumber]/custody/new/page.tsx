@@ -7,8 +7,17 @@ import DatePicker from 'react-datepicker';
 import { Employee, Project, Custody } from '@/types/custody';
 import CustodyLocationFields from '@/app/components/CustodyLocationFields';
 import type { CustodyLocationType } from '@/lib/custodyLocation';
+import { AdminGate } from '@/components/access/AdminGate';
 
 export default function NewCustodyPage() {
+  return (
+    <AdminGate>
+      <NewCustodyForm />
+    </AdminGate>
+  );
+}
+
+function NewCustodyForm() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<
     Array<{

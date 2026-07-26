@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 export async function GET(request: Request) {
   try {
@@ -9,7 +10,7 @@ export async function GET(request: Request) {
     const { db } = await connectToDatabase();
 
     if (!assetNumber?.trim()) {
-      return NextResponse.json([]);
+      return apiJson([]);
     }
 
     const custodyRecords = await db
@@ -18,10 +19,10 @@ export async function GET(request: Request) {
       .sort({ createdAt: -1 })
       .toArray();
 
-    return NextResponse.json(custodyRecords);
+    return apiJson(custodyRecords);
   } catch (err) {
     console.error('Failed to fetch tool custody records:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to fetch tool custody records' },
       { status: 500 }
     );
@@ -37,10 +38,10 @@ export async function POST(request: Request) {
     body.createdAt = new Date();
     
     const result = await db.collection('tools-custody').insertOne(body);
-    return NextResponse.json(result, { status: 201 });
+    return apiJson(result, { status: 201 });
   } catch (err) {
     console.error('Failed to create tool custody record:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to create tool custody record' },
       { status: 500 }
     );

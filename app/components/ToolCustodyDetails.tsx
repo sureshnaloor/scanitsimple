@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { PencilIcon, XMarkIcon, CheckIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { ToolCustody } from '@/types/tools';
+import { AdminOnly } from '@/components/access/AccessControls';
 
 interface ToolCustodyDetailsProps {
   currentCustody: ToolCustody | null;
@@ -128,26 +129,28 @@ export default function ToolCustodyDetails({
         <h2 className="text-xl font-semibold text-white">Custody Information</h2>
         {!isEditing && !isAdding ? (
           <div className="flex gap-2">
-            {currentCustody ? (
-              <button
-                onClick={() => {
-                  setIsEditing(true);
-                  setEditedCustody(currentCustody);
-                }}
-                className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
-              >
-                <PencilIcon className="h-4 w-4" />
-                Edit
-              </button>
-            ) : (
-              <button
-                onClick={() => setIsAdding(true)}
-                className="flex items-center gap-2 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors"
-              >
-                <PlusIcon className="h-4 w-4" />
-                Add Custody
-              </button>
-            )}
+            <AdminOnly>
+              {currentCustody ? (
+                <button
+                  onClick={() => {
+                    setIsEditing(true);
+                    setEditedCustody(currentCustody);
+                  }}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+                >
+                  <PencilIcon className="h-4 w-4" />
+                  Edit
+                </button>
+              ) : (
+                <button
+                  onClick={() => setIsAdding(true)}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors"
+                >
+                  <PlusIcon className="h-4 w-4" />
+                  Add Custody
+                </button>
+              )}
+            </AdminOnly>
           </div>
         ) : (
           <div className="flex gap-2">

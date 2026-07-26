@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,10 +41,10 @@ export async function GET() {
       ])
       .toArray();
 
-    return NextResponse.json(uncalibratedEquipment);
+    return apiJson(uncalibratedEquipment);
   } catch (err) {
     console.error('Failed to fetch un-calibrated MME:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to fetch un-calibrated MME' },
       { status: 500 }
     );

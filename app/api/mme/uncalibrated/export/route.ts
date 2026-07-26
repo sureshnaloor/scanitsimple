@@ -3,6 +3,7 @@ import * as XLSX from 'xlsx';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../../auth/[...nextauth]/auth';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,7 +11,7 @@ export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return apiJson({ error: 'Unauthorized: sign in before using this feature' }, { status: 401 });
     }
 
     const { db } = await connectToDatabase();
@@ -120,7 +121,7 @@ export async function GET() {
     });
   } catch (err) {
     console.error('Failed to export un-calibrated MME:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to export un-calibrated MME' },
       { status: 500 }
     );

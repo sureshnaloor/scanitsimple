@@ -13,9 +13,11 @@ import AssetQRCode from '@/components/AssetQRCode';
 import MaterialRequestForm from '@/components/MaterialRequestForm';
 import MaterialIssueForm from '@/components/MaterialIssueForm';
 import { useAppTheme } from '@/app/contexts/ThemeContext';
+import { useAccess } from '@/lib/use-access';
 
 export default function ProjectIssuedMaterialsPage() {
   const { theme } = useAppTheme();
+  const { isAdmin } = useAccess();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Array<{
     x: number;
@@ -713,6 +715,7 @@ export default function ProjectIssuedMaterialsPage() {
       header: 'Unit Rate',
       cell: ({ row }) => {
         const value = row.getValue('sourceUnitRate') as number;
+        if ((value as unknown) === '***') return '***';
         return (
           <span className={`text-sm font-medium ${backgroundStyles.cellText}`}>
             {new Intl.NumberFormat('en-US', {
@@ -763,6 +766,7 @@ export default function ProjectIssuedMaterialsPage() {
         const balanceQuantity = row.original.quantity - (row.original.pendingRequests || 0);
         const canTransfer = balanceQuantity > 0;
         
+        if (!isAdmin) return null;
         return (
           <div className="flex items-center gap-1">
             <button
@@ -846,6 +850,8 @@ export default function ProjectIssuedMaterialsPage() {
                 Requests Pending
               </span>
             </Link>
+            {isAdmin && (
+            <>
             <button
               onClick={() => setShowImportForm(true)}
               className="flex flex-col items-center gap-1 group"
@@ -882,6 +888,8 @@ export default function ProjectIssuedMaterialsPage() {
                 Add Material
               </span>
             </button>
+            </>
+            )}
           </div>
         </div>
 

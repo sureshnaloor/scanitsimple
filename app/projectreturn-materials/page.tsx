@@ -13,9 +13,11 @@ import AssetQRCode from '@/components/AssetQRCode';
 import ProjectReturnMaterialRequestForm from '@/components/ProjectReturnMaterialRequestForm';
 import ProjectReturnMaterialIssueForm from '@/components/ProjectReturnMaterialIssueForm';
 import { useAppTheme } from '@/app/contexts/ThemeContext';
+import { useAccess } from '@/lib/use-access';
 
 export default function ProjectReturnMaterialsPage() {
   const { theme } = useAppTheme();
+  const { isAdmin } = useAccess();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Array<{
     x: number;
@@ -641,6 +643,7 @@ export default function ProjectReturnMaterialsPage() {
       header: 'Unit Rate',
       cell: ({ row }) => {
         const value = row.getValue('sourceUnitRate') as number;
+        if ((value as unknown) === '***') return '***';
         return new Intl.NumberFormat('en-US', {
           style: 'currency',
           currency: 'SAR'
@@ -698,41 +701,45 @@ export default function ProjectReturnMaterialsPage() {
       header: 'Actions',
       cell: ({ row }) => (
         <div className="flex items-center gap-1">
-          <button
-            onClick={() => handleRequestMaterial(row.original)}
-            className={`p-1 ${backgroundStyles.actionButtonRequest} rounded transition-colors`}
-            title="Request Material"
-          >
-            <Send className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => handleIssueMaterial(row.original)}
-            className={`p-1 ${backgroundStyles.actionButtonIssue} rounded transition-colors`}
-            title="Issue Material"
-          >
-            <Package className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => setEditingMaterial(row.original)}
-            className={`p-1 ${backgroundStyles.actionButtonEdit} rounded transition-colors`}
-            title="Edit Material"
-          >
-            <Edit className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => handleDisposeMaterial(row.original)}
-            className={`p-1 ${backgroundStyles.actionButtonDispose} rounded transition-colors`}
-            title="Dispose Material"
-          >
-            <AlertTriangle className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => handleDeleteMaterial(row.original.materialid)}
-            className={`p-1 ${backgroundStyles.actionButtonDelete} rounded transition-colors`}
-            title="Delete Material"
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
+          {isAdmin && (
+            <>
+              <button
+                onClick={() => handleRequestMaterial(row.original)}
+                className={`p-1 ${backgroundStyles.actionButtonRequest} rounded transition-colors`}
+                title="Request Material"
+              >
+                <Send className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => handleIssueMaterial(row.original)}
+                className={`p-1 ${backgroundStyles.actionButtonIssue} rounded transition-colors`}
+                title="Issue Material"
+              >
+                <Package className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setEditingMaterial(row.original)}
+                className={`p-1 ${backgroundStyles.actionButtonEdit} rounded transition-colors`}
+                title="Edit Material"
+              >
+                <Edit className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => handleDisposeMaterial(row.original)}
+                className={`p-1 ${backgroundStyles.actionButtonDispose} rounded transition-colors`}
+                title="Dispose Material"
+              >
+                <AlertTriangle className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => handleDeleteMaterial(row.original.materialid)}
+                className={`p-1 ${backgroundStyles.actionButtonDelete} rounded transition-colors`}
+                title="Delete Material"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </>
+          )}
         </div>
       ),
     },
@@ -788,6 +795,8 @@ export default function ProjectReturnMaterialsPage() {
                 Disposed Materials
               </span>
             </Link>
+            {isAdmin && (
+            <>
             <button
               onClick={() => setShowImportForm(true)}
               className="flex flex-col items-center gap-1 group"
@@ -812,6 +821,8 @@ export default function ProjectReturnMaterialsPage() {
                 Add Material
               </span>
             </button>
+            </>
+            )}
           </div>
         </div>
 
@@ -1232,7 +1243,7 @@ export default function ProjectReturnMaterialsPage() {
                     Unit Rate
                   </label>
                   <p className={`px-3 py-2 ${backgroundStyles.modalInput} rounded-xl`}>
-                    {new Intl.NumberFormat('en-US', {
+                    {(materialToDispose.sourceUnitRate as unknown) === '***' ? '***' : new Intl.NumberFormat('en-US', {
                       style: 'currency',
                       currency: 'SAR'
                     }).format(materialToDispose.sourceUnitRate)}

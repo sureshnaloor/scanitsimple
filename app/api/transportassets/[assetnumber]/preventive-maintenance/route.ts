@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { ObjectId } from 'mongodb';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 const RECORDS = 'transport_maint_record_preventive';
 const MASTER = 'transport_maint_master_preventive';
@@ -17,10 +18,10 @@ export async function GET(
       .find({ assetnumber })
       .sort({ createdAt: -1 })
       .toArray();
-    return NextResponse.json(rows);
+    return apiJson(rows);
   } catch (error) {
     console.error('GET preventive maintenance records:', error);
-    return NextResponse.json({ error: 'Failed to load records' }, { status: 500 });
+    return apiJson({ error: 'Failed to load records' }, { status: 500 });
   }
 }
 
@@ -35,21 +36,21 @@ export async function POST(
     const remarks = String(body?.remarks ?? '').trim();
 
     if (!maintenanceTypeId || !ObjectId.isValid(maintenanceTypeId)) {
-      return NextResponse.json({ error: 'Valid maintenance type is required.' }, { status: 400 });
+      return apiJson({ error: 'Valid maintenance type is required.' }, { status: 400 });
     }
 
     const { db } = await connectToDatabase();
 
     const asset = await db.collection('transportasset').findOne({ assetnumber });
     if (!asset) {
-      return NextResponse.json({ error: 'Transport asset not found.' }, { status: 404 });
+      return apiJson({ error: 'Transport asset not found.' }, { status: 404 });
     }
 
     const master = await db
       .collection(MASTER)
       .findOne({ _id: new ObjectId(maintenanceTypeId) });
     if (!master) {
-      return NextResponse.json({ error: 'Maintenance type not found.' }, { status: 400 });
+      return apiJson({ error: 'Maintenance type not found.' }, { status: 400 });
     }
 
     const maintenanceTypeName = String((master as { name?: string }).name ?? '');
@@ -76,9 +77,9 @@ export async function POST(
 
     const result = await db.collection(RECORDS).insertOne(doc);
     const created = await db.collection(RECORDS).findOne({ _id: result.insertedId });
-    return NextResponse.json(created, { status: 201 });
+    return apiJson(created, { status: 201 });
   } catch (error) {
     console.error('POST preventive maintenance record:', error);
-    return NextResponse.json({ error: 'Failed to create record' }, { status: 500 });
+    return apiJson({ error: 'Failed to create record' }, { status: 500 });
   }
 }

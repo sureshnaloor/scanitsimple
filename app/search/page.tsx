@@ -130,8 +130,9 @@ export default function AssetSearchPage() {
         return new Date(dateString).toLocaleDateString();
     };
 
-    const formatCurrency = (value: number) => {
-        if (!value) return 'N/A';
+    const formatCurrency = (value: number | string) => {
+        if ((value as unknown) === '***') return '***';
+        if (!value || typeof value !== 'number') return 'N/A';
         return new Intl.NumberFormat('en-SA', {
             style: 'currency',
             currency: 'SAR'

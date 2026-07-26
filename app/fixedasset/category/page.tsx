@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import MasterDataPageShell from '@/app/components/MasterDataPageShell';
 import { useThemeSurfaces } from '@/lib/themePageStyles';
 import { fap } from '@/lib/fixedAssetPageDesign';
+import { useAccess } from '@/lib/use-access';
 
 interface Category {
   _id: string;
@@ -17,6 +18,7 @@ export default function FixedAssetCategoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const s = useThemeSurfaces();
+  const { isAdmin } = useAccess();
 
   const fetchCategories = async () => {
     try {
@@ -95,6 +97,7 @@ export default function FixedAssetCategoryPage() {
 
         {error && <div className={s.errorBox}>{error}</div>}
 
+        {isAdmin && (
         <div className={`${s.card} p-4`}>
           <h2 className={s.sectionTitle}>Add Category</h2>
           <div className="flex gap-3">
@@ -110,6 +113,8 @@ export default function FixedAssetCategoryPage() {
             </button>
           </div>
         </div>
+
+                )}
 
         <div className={`${s.card} p-4`}>
           <h2 className={s.sectionTitle}>View / Edit Categories</h2>
@@ -153,7 +158,8 @@ export default function FixedAssetCategoryPage() {
                         </button>
                       </>
                     ) : (
-                      <>
+                      isAdmin && (
+                        <>
                         <button
                           type="button"
                           onClick={() => setEditingCategory(category)}
@@ -169,6 +175,7 @@ export default function FixedAssetCategoryPage() {
                           Delete
                         </button>
                       </>
+                      )
                     )}
                   </div>
                 </div>

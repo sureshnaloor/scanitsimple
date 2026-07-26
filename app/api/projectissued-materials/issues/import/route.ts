@@ -4,14 +4,15 @@ import { ObjectId } from 'mongodb';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../../auth/[...nextauth]/auth';
 import * as XLSX from 'xlsx';
+import { apiJson } from '@/lib/api-response';
 
 export async function POST(request: Request) {
   try {
     // Check authentication
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
+      return apiJson(
+        { error: 'Unauthorized: sign in before using this feature' },
         { status: 401 }
       );
     }
@@ -20,7 +21,7 @@ export async function POST(request: Request) {
     const file = formData.get('file') as File;
     
     if (!file) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'No file provided' },
         { status: 400 }
       );
@@ -84,7 +85,7 @@ export async function POST(request: Request) {
     }
 
     if (rows.length < 2) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'File must contain at least a header row and one data row' },
         { status: 400 }
       );
@@ -234,7 +235,7 @@ export async function POST(request: Request) {
     }
 
     if (issues.length === 0) {
-      return NextResponse.json(
+      return apiJson(
         { 
           error: 'No valid material issues to import', 
           errors,
@@ -288,7 +289,7 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({
+    return apiJson({
       success: true,
       imported: insertedCount,
       total: issues.length,
@@ -298,7 +299,7 @@ export async function POST(request: Request) {
 
   } catch (err) {
     console.error('Failed to import material issues:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to import material issues' },
       { status: 500 }
     );

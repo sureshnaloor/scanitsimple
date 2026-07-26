@@ -3,6 +3,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../auth/[...nextauth]/auth';
+import { apiJson } from '@/lib/api-response';
 
 export async function GET(
   request: Request,
@@ -12,8 +13,8 @@ export async function GET(
     // Check authentication
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
+      return apiJson(
+        { error: 'Unauthorized: sign in before using this feature' },
         { status: 401 }
       );
     }
@@ -21,7 +22,7 @@ export async function GET(
     const { materialId } = params;
 
     if (!materialId) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'Material ID is required' },
         { status: 400 }
       );
@@ -37,7 +38,7 @@ export async function GET(
       });
 
     if (!disposedMaterial) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'Disposed material not found' },
         { status: 404 }
       );
@@ -72,11 +73,11 @@ export async function GET(
       updatedAt: disposedMaterial.updatedAt
     };
 
-    return NextResponse.json(transformedMaterial, { status: 200 });
+    return apiJson(transformedMaterial, { status: 200 });
 
   } catch (error: any) {
     console.error('Error fetching disposed material:', error);
-    return NextResponse.json(
+    return apiJson(
       { 
         error: error.message || 'Failed to fetch disposed material',
         success: false 

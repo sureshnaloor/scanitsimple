@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '../auth/[...nextauth]/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import { PPEReceipt, PPEReceiptInsert, PPEMaster, Employee, PPETransactionInsert, PPEStockBalanceInsert } from '@/types/ppe';
+import { apiJson } from '@/lib/api-response';
 
 interface PPEApiResponse<T> {
   success: boolean;
@@ -14,8 +15,8 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
+      return apiJson(
+        { success: false, error: 'Unauthorized: sign in before using this feature' },
         { status: 401 }
       );
     }
@@ -51,10 +52,10 @@ export async function GET(request: NextRequest) {
       data: receipts
     };
 
-    return NextResponse.json(response);
+    return apiJson(response);
   } catch (error) {
     console.error('Error fetching PPE receipts:', error);
-    return NextResponse.json(
+    return apiJson(
       { success: false, error: 'Failed to fetch PPE receipts' },
       { status: 500 }
     );
@@ -65,8 +66,8 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
+      return apiJson(
+        { success: false, error: 'Unauthorized: sign in before using this feature' },
         { status: 401 }
       );
     }
@@ -82,14 +83,14 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!ppeId || !ppeName || !dateOfReceipt || !quantityReceived) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'Missing required fields' },
         { status: 400 }
       );
     }
 
     if (quantityReceived <= 0) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'Quantity received must be greater than 0' },
         { status: 400 }
       );
@@ -102,7 +103,7 @@ export async function POST(request: NextRequest) {
     const ppeMaster = await ppeMasterCollection.findOne({ ppeId, isActive: true }) as PPEMaster | null;
     
     if (!ppeMaster) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'PPE not found or inactive' },
         { status: 404 }
       );
@@ -182,10 +183,10 @@ export async function POST(request: NextRequest) {
         data: newReceipt as PPEReceipt
       };
 
-      return NextResponse.json(response, { status: 201 });
+      return apiJson(response, { status: 201 });
     } catch (error: any) {
       console.error('Transaction error:', error);
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: error.message || 'Failed to create receipt' },
         { status: 500 }
       );
@@ -194,7 +195,7 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error('Error creating PPE receipt:', error);
-    return NextResponse.json(
+    return apiJson(
       { success: false, error: 'Failed to create PPE receipt' },
       { status: 500 }
     );

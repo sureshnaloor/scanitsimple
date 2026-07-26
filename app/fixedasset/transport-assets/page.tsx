@@ -18,6 +18,9 @@ import FixedAssetStatusBadge from '@/app/components/fixedasset/FixedAssetStatusB
 import FixedAssetListShell from '@/app/components/fixedasset/FixedAssetListShell';
 import { fap, formatCurrency } from '@/lib/fixedAssetPageDesign';
 import { computeAssetStats, sortBtn, th } from '@/lib/fixedAssetListHelpers';
+import { useAccess } from '@/lib/use-access';
+import { useAssetMasters } from '@/lib/use-asset-masters';
+import MasterDataSelects from '@/app/components/fixedasset/MasterDataSelects';
 
 interface TransportAsset {
   _id: string;
@@ -80,6 +83,7 @@ function formatDateInput(value: string | Date | null | undefined): string {
 }
 
 export default function TransportAssetsPage() {
+  const { isAdmin } = useAccess();
   const [data, setData] = useState<TransportAsset[]>([]);
   const [assetNumberSearch, setAssetNumberSearch] = useState('');
   const [assetNameSearch, setAssetNameSearch] = useState('');
@@ -108,6 +112,10 @@ export default function TransportAssetsPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [editForm, setEditForm] = useState(emptyForm());
   const [editAssetNumber, setEditAssetNumber] = useState('');
+
+  // Master-data dropdown options for the add form and edit dialog
+  const addMasters = useAssetMasters(true, form.assetcategory);
+  const editMasters = useAssetMasters(true, editForm.assetcategory);
 
   const openBulkErrorModal = (title: string, content: string) => {
     setErrorModalTitle(title);
@@ -612,24 +620,28 @@ export default function TransportAssetsPage() {
       header: () => <span className={th}>Actions</span>,
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => openEdit(row.original)}
-            className={fap.btnSecondary}
-            aria-label="Edit"
-          >
-            <PencilIcon className="h-4 w-4" />
-            Edit
-          </button>
-          <button
-            type="button"
-            onClick={() => handleDelete(row.original.assetnumber)}
-            className={fap.btnDanger}
-            aria-label="Delete"
-          >
-            <TrashIcon className="h-4 w-4" />
-            Delete
-          </button>
+          {isAdmin && (
+            <>
+              <button
+                type="button"
+                onClick={() => openEdit(row.original)}
+                className={fap.btnSecondary}
+                aria-label="Edit"
+              >
+                <PencilIcon className="h-4 w-4" />
+                Edit
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDelete(row.original.assetnumber)}
+                className={fap.btnDanger}
+                aria-label="Delete"
+              >
+                <TrashIcon className="h-4 w-4" />
+                Delete
+              </button>
+            </>
+          )}
         </div>
       )
     }
@@ -665,6 +677,7 @@ export default function TransportAssetsPage() {
 
         <FixedAssetStatBar stats={stats} />
 
+        {isAdmin && (
         <form
           onSubmit={handleAddSubmit}
           className={`${fap.card} ${fap.cardPadding} mb-8 space-y-4`}
@@ -691,30 +704,14 @@ export default function TransportAssetsPage() {
                 required
               />
             </div>
-            <div>
-              <label className={fap.label}>Category</label>
-              <input
-                className={fap.input}
-                value={form.assetcategory}
-                onChange={(e) => setForm((f) => ({ ...f, assetcategory: e.target.value }))}
-              />
-            </div>
-            <div>
-              <label className={fap.label}>Subcategory</label>
-              <input
-                className={fap.input}
-                value={form.assetsubcategory}
-                onChange={(e) => setForm((f) => ({ ...f, assetsubcategory: e.target.value }))}
-              />
-            </div>
-            <div>
-              <label className={fap.label}>Status</label>
-              <input
-                className={fap.input}
-                value={form.assetstatus}
-                onChange={(e) => setForm((f) => ({ ...f, assetstatus: e.target.value }))}
-              />
-            </div>
+            <MasterDataSelects
+              category={form.assetcategory}
+              subcategory={form.assetsubcategory}
+              status={form.assetstatus}
+              categories={addMasters.categories}
+              subcategories={addMasters.subcategories}
+              onPatch={(p) => setForm((f) => ({ ...f, ...p }))}
+            />
             <div>
               <label className={fap.label}>Acquired value</label>
               <input
@@ -812,6 +809,7 @@ export default function TransportAssetsPage() {
             </button>
           </div>
         </form>
+        )}
 
         <div className={fap.tableWrap}>
           <div className="border-b border-slate-200 dark:border-[#2A3B4C]/50 px-6 py-4">
@@ -973,30 +971,14 @@ export default function TransportAssetsPage() {
                     onChange={(e) => setEditForm((f) => ({ ...f, assetdescription: e.target.value }))}
                   />
                 </div>
-                <div>
-                  <label className={fap.label}>Category</label>
-                  <input
-                    className={fap.input}
-                    value={editForm.assetcategory}
-                    onChange={(e) => setEditForm((f) => ({ ...f, assetcategory: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <label className={fap.label}>Subcategory</label>
-                  <input
-                    className={fap.input}
-                    value={editForm.assetsubcategory}
-                    onChange={(e) => setEditForm((f) => ({ ...f, assetsubcategory: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <label className={fap.label}>Status</label>
-                  <input
-                    className={fap.input}
-                    value={editForm.assetstatus}
-                    onChange={(e) => setEditForm((f) => ({ ...f, assetstatus: e.target.value }))}
-                  />
-                </div>
+                <MasterDataSelects
+                  category={editForm.assetcategory}
+                  subcategory={editForm.assetsubcategory}
+                  status={editForm.assetstatus}
+                  categories={editMasters.categories}
+                  subcategories={editMasters.subcategories}
+                  onPatch={(p) => setEditForm((f) => ({ ...f, ...p }))}
+                />
                 <div>
                   <label className={fap.label}>Acquired value</label>
                   <input

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { ObjectId } from 'mongodb';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 const RECORDS = 'facility_oncall_maintenance';
 const KINDS = new Set(['service', 'repair']);
@@ -12,7 +13,7 @@ export async function PUT(
   try {
     const { assetnumber, recordId } = params;
     if (!ObjectId.isValid(recordId)) {
-      return NextResponse.json({ error: 'Invalid record id.' }, { status: 400 });
+      return apiJson({ error: 'Invalid record id.' }, { status: 400 });
     }
 
     const body = await request.json();
@@ -22,7 +23,7 @@ export async function PUT(
 
     const existing = await col.findOne({ _id: oid, assetnumber });
     if (!existing) {
-      return NextResponse.json({ error: 'Record not found.' }, { status: 404 });
+      return apiJson({ error: 'Record not found.' }, { status: 404 });
     }
 
     const $set: Record<string, unknown> = {};
@@ -45,21 +46,21 @@ export async function PUT(
     if (body?.recordType !== undefined) {
       const rt = String(body.recordType ?? '').trim().toLowerCase();
       if (!KINDS.has(rt)) {
-        return NextResponse.json({ error: 'recordType must be service or repair.' }, { status: 400 });
+        return apiJson({ error: 'recordType must be service or repair.' }, { status: 400 });
       }
       $set.recordType = rt;
     }
 
     if (Object.keys($set).length === 0) {
-      return NextResponse.json(existing);
+      return apiJson(existing);
     }
 
     await col.updateOne({ _id: oid, assetnumber }, { $set });
     const updated = await col.findOne({ _id: oid });
-    return NextResponse.json(updated);
+    return apiJson(updated);
   } catch (error) {
     console.error('PUT facility on-call maintenance:', error);
-    return NextResponse.json({ error: 'Failed to update record' }, { status: 500 });
+    return apiJson({ error: 'Failed to update record' }, { status: 500 });
   }
 }
 
@@ -70,7 +71,7 @@ export async function DELETE(
   try {
     const { assetnumber, recordId } = params;
     if (!ObjectId.isValid(recordId)) {
-      return NextResponse.json({ error: 'Invalid record id.' }, { status: 400 });
+      return apiJson({ error: 'Invalid record id.' }, { status: 400 });
     }
 
     const { db } = await connectToDatabase();
@@ -79,11 +80,11 @@ export async function DELETE(
       .deleteOne({ _id: new ObjectId(recordId), assetnumber });
 
     if (result.deletedCount === 0) {
-      return NextResponse.json({ error: 'Record not found.' }, { status: 404 });
+      return apiJson({ error: 'Record not found.' }, { status: 404 });
     }
-    return NextResponse.json({ success: true });
+    return apiJson({ success: true });
   } catch (error) {
     console.error('DELETE facility on-call maintenance:', error);
-    return NextResponse.json({ error: 'Failed to delete record' }, { status: 500 });
+    return apiJson({ error: 'Failed to delete record' }, { status: 500 });
   }
 }

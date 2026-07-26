@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { Building2, Calendar, MapPin, Tag } from 'lucide-react';
+import { Building2, Calendar, MapPin, Tag, Pencil, Trash2 } from 'lucide-react';
 
 import FixedAssetBreadcrumb from '@/app/components/fixedasset/FixedAssetBreadcrumb';
 import FixedAssetSection from '@/app/components/fixedasset/FixedAssetSection';
@@ -12,6 +12,7 @@ import { AssetQRCode } from '@/components/AssetQRCode';
 import CustomDetailsSection from '@/app/components/CustomDetailsSection';
 import FixedAssetDetailShell from '@/app/components/fixedasset/FixedAssetDetailShell';
 import { fap, formatCurrency } from '@/lib/fixedAssetPageDesign';
+import { useAccess } from '@/lib/use-access';
 
 interface FacilityDetail {
   _id: string;
@@ -59,6 +60,7 @@ function dOut(v: string | Date | null | undefined): string {
 }
 
 export default function FacilityAssetDetailPage() {
+  const { isAdmin } = useAccess();
   const params = useParams();
   const assetnumber = typeof params?.assetnumber === 'string' ? params.assetnumber : '';
 
@@ -445,15 +447,25 @@ export default function FacilityAssetDetailPage() {
                             <td className="px-3 py-2">{dOut(r.actualDate)}</td>
                             <td className="max-w-[240px] truncate px-3 py-2">{r.remarks || '—'}</td>
                             <td className="whitespace-nowrap px-3 py-2">
-                              <button type="button" onClick={() => openEditOncall(r)} className="mr-2 text-xs text-[#00B4D8] hover:underline">Edit</button>
-                              <button type="button" onClick={() => deleteOncall(r._id)} className="text-xs text-[#EF4444] hover:underline">Delete</button>
+                              {isAdmin && (
+                                <div className="flex items-center gap-2">
+                                  <button type="button" onClick={() => openEditOncall(r)} className="text-[#00B4D8] hover:opacity-80" title="Edit record" aria-label="Edit record">
+                                    <Pencil className="h-4 w-4" />
+                                  </button>
+                                  <button type="button" onClick={() => deleteOncall(r._id)} className="text-[#EF4444] hover:opacity-80" title="Delete record" aria-label="Delete record">
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              )}
                             </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
-                  <div className="mt-4 grid gap-3 border-t border-slate-200 dark:border-[#2A3B4C]/50 pt-4 sm:grid-cols-2">
+                  {isAdmin && (
+                    <>
+                      <div className="mt-4 grid gap-3 border-t border-slate-200 dark:border-[#2A3B4C]/50 pt-4 sm:grid-cols-2">
                     <label className="block">
                       <span className={fap.fieldLabel}>Type</span>
                       <select className={inp} value={newOncall.recordType} onChange={(e) => setNewOncall((f) => ({ ...f, recordType: e.target.value as 'service' | 'repair' }))}>
@@ -469,8 +481,10 @@ export default function FacilityAssetDetailPage() {
                       <span className={fap.fieldLabel}>Remarks</span>
                       <input className={inp} value={newOncall.remarks} onChange={(e) => setNewOncall((f) => ({ ...f, remarks: e.target.value }))} />
                     </label>
-                  </div>
-                  <button type="button" onClick={addOncall} className={`${fap.btnPrimary} mt-4`}>Add on-call record</button>
+                      </div>
+                      <button type="button" onClick={addOncall} className={`${fap.btnPrimary} mt-4`}>Add on-call record</button>
+                    </>
+                  )}
                 </FixedAssetSection>
 
                 <CustomDetailsSection assetType="facility" assetnumber={assetnumber} />

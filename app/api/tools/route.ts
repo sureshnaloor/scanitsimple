@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
+import { apiJson } from '@/lib/api-response';
 
 // Function to generate 10-digit asset number from ObjectId
 function generateAssetNumber(objectId: string): string {
@@ -41,10 +42,10 @@ export async function GET(request: Request) {
       .sort({ createdAt: -1 })
       .toArray();
 
-    return NextResponse.json(tools);
+    return apiJson(tools);
   } catch (err) {
     console.error('Failed to fetch tools:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to fetch tools' },
       { status: 500 }
     );
@@ -76,10 +77,10 @@ export async function POST(request: Request) {
     body.updatedAt = new Date();
     
     const result = await db.collection('tools').insertOne(body);
-    return NextResponse.json({ ...result, assetnumber: body.assetnumber }, { status: 201 });
+    return apiJson({ ...result, assetnumber: body.assetnumber }, { status: 201 });
   } catch (err) {
     console.error('Failed to create tool:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to create tool' },
       { status: 500 }
     );

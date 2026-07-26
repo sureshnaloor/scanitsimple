@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 export async function GET(request: Request) {
     try {
@@ -73,10 +74,10 @@ export async function GET(request: Request) {
                 }
             ]).toArray();
 
-        return NextResponse.json({ data: activeCalibrations }, { status: 200 });
+        return apiJson({ data: activeCalibrations }, { status: 200 });
     } catch (error) {
         console.error('Error fetching active calibrations:', error);
-        return NextResponse.json(
+        return apiJson(
             { error: 'Failed to fetch active calibrations' },
             { status: 500 }
         );

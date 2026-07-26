@@ -5,6 +5,7 @@ import {
   resolvePremisesTownCity,
   type PremisesKind,
 } from '@/lib/premisesTownCity';
+import { apiJson } from '@/lib/api-response';
 
 function trimStr(value: unknown) {
   return String(value ?? '').trim();
@@ -76,10 +77,10 @@ export async function GET(request: NextRequest) {
       .sort({ locationName: 1 })
       .toArray();
 
-    return NextResponse.json(locations);
+    return apiJson(locations);
   } catch (error) {
     console.error('Database Error:', error);
-    return NextResponse.json({ error: 'Failed to fetch locations' }, { status: 500 });
+    return apiJson({ error: 'Failed to fetch locations' }, { status: 500 });
   }
 }
 
@@ -94,14 +95,14 @@ export async function POST(request: NextRequest) {
     const premisesKind = parsePremisesKindBody(body.premisesKind);
 
     if (!locationName || !townCity || !buildingTower) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'Location name, town/city, and building/tower are required' },
         { status: 400 }
       );
     }
 
     if (!premisesKind) {
-      return NextResponse.json(
+      return apiJson(
         {
           error:
             'Premises type is required: use "warehouse" or "department" (camp / offices).',
@@ -112,14 +113,14 @@ export async function POST(request: NextRequest) {
 
     const coords = parseCoordPair(body);
     if (!coords.ok) {
-      return NextResponse.json({ error: coords.error }, { status: 400 });
+      return apiJson({ error: coords.error }, { status: 400 });
     }
 
     const { db } = await connectToDatabase();
 
     const canonicalTown = await resolvePremisesTownCity(db, townCity, premisesKind);
     if (!canonicalTown) {
-      return NextResponse.json(
+      return apiJson(
         {
           error:
             'Town/city must match the selected premises type: warehouse cities for warehouse premises, or department/camp cities for camp/offices (Admin → Locations → City lists).',
@@ -149,7 +150,7 @@ export async function POST(request: NextRequest) {
       });
     }
     if (existing) {
-      return NextResponse.json({ error: 'Location with these details already exists' }, { status: 400 });
+      return apiJson({ error: 'Location with these details already exists' }, { status: 400 });
     }
 
     const newLocation: Record<string, unknown> = {
@@ -172,10 +173,10 @@ export async function POST(request: NextRequest) {
 
     const result = await db.collection('locations').insertOne(newLocation);
 
-    return NextResponse.json({ _id: result.insertedId, ...newLocation }, { status: 201 });
+    return apiJson({ _id: result.insertedId, ...newLocation }, { status: 201 });
   } catch (error) {
     console.error('Error creating location:', error);
-    return NextResponse.json({ error: 'Failed to create location' }, { status: 500 });
+    return apiJson({ error: 'Failed to create location' }, { status: 500 });
   }
 }
 
@@ -191,18 +192,18 @@ export async function PUT(request: NextRequest) {
     const premisesKind = parsePremisesKindBody(body.premisesKind);
 
     if (!_id) {
-      return NextResponse.json({ error: 'Location ID is required' }, { status: 400 });
+      return apiJson({ error: 'Location ID is required' }, { status: 400 });
     }
 
     if (!locationName || !townCity || !buildingTower) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'Location name, town/city, and building/tower are required' },
         { status: 400 }
       );
     }
 
     if (!premisesKind) {
-      return NextResponse.json(
+      return apiJson(
         {
           error:
             'Premises type is required: use "warehouse" or "department" (camp / offices).',
@@ -213,14 +214,14 @@ export async function PUT(request: NextRequest) {
 
     const coords = parseCoordPair(body);
     if (!coords.ok) {
-      return NextResponse.json({ error: coords.error }, { status: 400 });
+      return apiJson({ error: coords.error }, { status: 400 });
     }
 
     const { db } = await connectToDatabase();
 
     const existingLoc = await db.collection('locations').findOne({ _id: new ObjectId(_id) });
     if (!existingLoc) {
-      return NextResponse.json({ error: 'Location not found' }, { status: 404 });
+      return apiJson({ error: 'Location not found' }, { status: 404 });
     }
 
     const prevTown = trimStr((existingLoc as { townCity?: string }).townCity);
@@ -231,7 +232,7 @@ export async function PUT(request: NextRequest) {
       if (prevTown === townCity && prevKind === premisesKind) {
         townResolved = townCity;
       } else {
-        return NextResponse.json(
+        return apiJson(
           {
             error:
               'Town/city must match the selected premises type (warehouse list or department/camp list).',
@@ -273,16 +274,16 @@ export async function PUT(request: NextRequest) {
     );
 
     if (result.matchedCount === 0) {
-      return NextResponse.json({ error: 'Location not found' }, { status: 404 });
+      return apiJson({ error: 'Location not found' }, { status: 404 });
     }
 
-    return NextResponse.json({
+    return apiJson({
       _id,
       ...updateData,
     });
   } catch (error) {
     console.error('Error updating location:', error);
-    return NextResponse.json({ error: 'Failed to update location' }, { status: 500 });
+    return apiJson({ error: 'Failed to update location' }, { status: 500 });
   }
 }
 
@@ -292,7 +293,7 @@ export async function DELETE(request: NextRequest) {
     const id = searchParams.get('id');
 
     if (!id) {
-      return NextResponse.json({ error: 'Location ID is required' }, { status: 400 });
+      return apiJson({ error: 'Location ID is required' }, { status: 400 });
     }
 
     const { db } = await connectToDatabase();
@@ -302,12 +303,12 @@ export async function DELETE(request: NextRequest) {
     });
 
     if (result.deletedCount === 0) {
-      return NextResponse.json({ error: 'Location not found' }, { status: 404 });
+      return apiJson({ error: 'Location not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ message: 'Location deleted successfully' });
+    return apiJson({ message: 'Location deleted successfully' });
   } catch (error) {
     console.error('Error deleting location:', error);
-    return NextResponse.json({ error: 'Failed to delete location' }, { status: 500 });
+    return apiJson({ error: 'Failed to delete location' }, { status: 500 });
   }
 }

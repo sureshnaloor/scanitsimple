@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 export async function GET(request: Request) {
     try {
@@ -77,10 +78,10 @@ export async function GET(request: Request) {
         // Log the count for debugging
         console.log('Found expired calibrations:', expiredCalibrations.length);
 
-        return NextResponse.json({ data: expiredCalibrations }, { status: 200 });
+        return apiJson({ data: expiredCalibrations }, { status: 200 });
     } catch (error) {
         console.error('Error fetching expired calibrations:', error);
-        return NextResponse.json(
+        return apiJson(
             { error: 'Failed to fetch expired calibrations' },
             { status: 500 }
         );

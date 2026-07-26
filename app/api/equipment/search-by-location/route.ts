@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 /**
  * Build a MongoDB regex pattern string from user search text.
@@ -28,7 +29,7 @@ export async function GET(request: Request) {
     const search = searchParams.get('search') ?? searchParams.get('q') ?? '';
 
     if (!type || !['mme', 'fixedasset'].includes(type)) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'Query param "type" is required and must be "mme" or "fixedasset"' },
         { status: 400 }
       );
@@ -36,7 +37,7 @@ export async function GET(request: Request) {
 
     const searchTrimmed = (search || '').trim();
     if (!searchTrimmed) {
-      return NextResponse.json([]);
+      return apiJson([]);
     }
 
     const { db, client } = await connectToDatabase();
@@ -45,7 +46,7 @@ export async function GET(request: Request) {
 
     const locationPattern = searchTextToRegexPattern(searchTrimmed);
     if (!locationPattern) {
-      return NextResponse.json([]);
+      return apiJson([]);
     }
 
     // Match custody: current (custodyto null) and any of the 3 location fields contains the text (case-insensitive).
@@ -95,7 +96,7 @@ export async function GET(request: Request) {
         : custodyRecords.filter((r) => !isMME(r.assetnumber));
 
     if (filtered.length === 0) {
-      return NextResponse.json([]);
+      return apiJson([]);
     }
 
     const assetNumbers = filtered.map((r) => r.assetnumber);
@@ -150,10 +151,10 @@ export async function GET(request: Request) {
       };
     });
 
-    return NextResponse.json(results);
+    return apiJson(results);
   } catch (err) {
     console.error('Search by location failed:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to search by location' },
       { status: 500 }
     );

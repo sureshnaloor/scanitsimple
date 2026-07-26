@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
+import { apiJson } from '@/lib/api-response';
 
 function parseOptionalDate(value: unknown): Date | null {
   if (value === null || value === undefined || value === '') return null;
@@ -44,13 +45,13 @@ export async function GET(
     console.log('Fetched calibrations:', JSON.stringify(calibrations, null, 2));
 
     if (!calibrations.length) {
-      return NextResponse.json([]);
+      return apiJson([]);
     }
 
-    return NextResponse.json(calibrations);
+    return apiJson(calibrations);
   } catch (error) {
     console.error('Failed to fetch calibrations:', error);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to fetch calibrations' },
       { status: 500 }
     );
@@ -68,7 +69,7 @@ export async function PUT(
     
     // Ensure we have an _id to update the specific calibration
     if (!body._id) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'Calibration ID is required' },
         { status: 400 }
       );
@@ -87,7 +88,7 @@ export async function PUT(
     );
 
     if (result.matchedCount === 0) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'Calibration not found' },
         { status: 404 }
       );
@@ -98,10 +99,10 @@ export async function PUT(
       .collection('equipmentcalibcertificates')
       .findOne({ _id: new ObjectId(_id) });
 
-    return NextResponse.json(updatedCalibration);
+    return apiJson(updatedCalibration);
   } catch (error) {
     console.error('Failed to update calibration:', error);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to update calibration' },
       { status: 500 }
     );
@@ -120,16 +121,16 @@ export async function DELETE(
     });
 
     if (result.deletedCount === 0) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'Calibration not found' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(result);
+    return apiJson(result);
   } catch (error) {
     console.error('Failed to delete calibration:', error);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to delete calibration' },
       { status: 500 }
     );
@@ -170,10 +171,10 @@ export async function POST(
       .collection('equipmentcalibcertificates')
       .findOne({ _id: result.insertedId });
 
-    return NextResponse.json(createdCalibration);
+    return apiJson(createdCalibration);
   } catch (error) {
     console.error('Failed to create calibration:', error);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to create calibration' },
       { status: 500 }
     );

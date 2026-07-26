@@ -7,8 +7,10 @@ import AssetQRCode from '@/components/AssetQRCode';
 import { Edit, Trash2, Download, Upload, FileText, Package, Send, ClipboardList, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 import ProjectReturnMaterialRequestForm from '@/components/ProjectReturnMaterialRequestForm';
 import ProjectReturnMaterialIssueForm from '@/components/ProjectReturnMaterialIssueForm';
+import { useAccess } from '@/lib/use-access';
 
 export default function ProjectReturnMaterialDetailPage() {
+  const { isAdmin } = useAccess();
   const params = useParams();
   const router = useRouter();
   const materialId = params?.materialId as string;
@@ -283,6 +285,8 @@ export default function ProjectReturnMaterialDetailPage() {
                 Requests Pending
               </span>
             </Link>
+            {isAdmin && (
+            <>
             <button
               onClick={() => setShowRequestForm(true)}
               className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors group relative"
@@ -338,6 +342,8 @@ export default function ProjectReturnMaterialDetailPage() {
                 </button>
               );
             })()}
+            </>
+          )}
           </div>
         </div>
 
@@ -510,7 +516,7 @@ export default function ProjectReturnMaterialDetailPage() {
                     />
                   ) : (
                     <p className="px-3 py-2 bg-gray-50 dark:bg-gray-700 rounded-lg text-gray-900 dark:text-white">
-                      {new Intl.NumberFormat('en-US', {
+                      {(material.sourceUnitRate as unknown) === '***' ? '***' : new Intl.NumberFormat('en-US', {
                         style: 'currency',
                         currency: 'SAR'
                       }).format(material.sourceUnitRate)}
@@ -957,7 +963,7 @@ export default function ProjectReturnMaterialDetailPage() {
                     Unit Rate
                   </label>
                   <p className="px-3 py-2 bg-gray-50 dark:bg-gray-700 rounded-lg text-gray-900 dark:text-white">
-                    {new Intl.NumberFormat('en-US', {
+                    {(material.sourceUnitRate as unknown) === '***' ? '***' : new Intl.NumberFormat('en-US', {
                       style: 'currency',
                       currency: 'SAR'
                     }).format(material.sourceUnitRate)}

@@ -3,6 +3,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
+import { AdminGate } from '@/components/access/AdminGate';
 
 function LocationContent() {
   const searchParams = useSearchParams();
@@ -109,7 +110,9 @@ export default function LogLocationPage() {
               <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
             </div>
           }>
-            <LocationContent />
+            <AdminGate>
+              <LocationContent />
+            </AdminGate>
           </Suspense>
         </main>
       </div>

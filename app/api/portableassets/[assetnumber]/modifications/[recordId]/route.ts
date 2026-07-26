@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { ObjectId } from 'mongodb';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 const RECORDS = 'portable_modification';
 
@@ -13,7 +14,7 @@ export async function PUT(
   try {
     const { assetnumber, recordId } = params;
     if (!ObjectId.isValid(recordId)) {
-      return NextResponse.json({ error: 'Invalid record id.' }, { status: 400 });
+      return apiJson({ error: 'Invalid record id.' }, { status: 400 });
     }
 
     const body = await request.json();
@@ -23,7 +24,7 @@ export async function PUT(
 
     const existing = await col.findOne({ _id: oid, assetnumber });
     if (!existing) {
-      return NextResponse.json({ error: 'Record not found.' }, { status: 404 });
+      return apiJson({ error: 'Record not found.' }, { status: 404 });
     }
 
     const $set: Record<string, unknown> = {};
@@ -31,21 +32,21 @@ export async function PUT(
     if (body?.entryKind !== undefined) {
       const k = String(body.entryKind ?? '').trim();
       if (!KINDS.has(k)) {
-        return NextResponse.json({ error: 'entryKind must be material or service.' }, { status: 400 });
+        return apiJson({ error: 'entryKind must be material or service.' }, { status: 400 });
       }
       $set.entryKind = k;
     }
     if (body?.category !== undefined) {
       const c = String(body.category ?? '').trim();
       if (!c) {
-        return NextResponse.json({ error: 'Category cannot be empty.' }, { status: 400 });
+        return apiJson({ error: 'Category cannot be empty.' }, { status: 400 });
       }
       $set.category = c;
     }
     if (body?.description !== undefined) {
       const d = String(body.description ?? '').trim();
       if (!d) {
-        return NextResponse.json({ error: 'Description cannot be empty.' }, { status: 400 });
+        return apiJson({ error: 'Description cannot be empty.' }, { status: 400 });
       }
       $set.description = d;
     }
@@ -58,22 +59,22 @@ export async function PUT(
       } else {
         const d = new Date(String(body.workDate));
         if (Number.isNaN(d.getTime())) {
-          return NextResponse.json({ error: 'Invalid work date.' }, { status: 400 });
+          return apiJson({ error: 'Invalid work date.' }, { status: 400 });
         }
         $set.workDate = d;
       }
     }
 
     if (Object.keys($set).length === 0) {
-      return NextResponse.json(existing);
+      return apiJson(existing);
     }
 
     await col.updateOne({ _id: oid, assetnumber }, { $set });
     const updated = await col.findOne({ _id: oid });
-    return NextResponse.json(updated);
+    return apiJson(updated);
   } catch (error) {
     console.error('PUT portable modification:', error);
-    return NextResponse.json({ error: 'Failed to update modification' }, { status: 500 });
+    return apiJson({ error: 'Failed to update modification' }, { status: 500 });
   }
 }
 
@@ -84,7 +85,7 @@ export async function DELETE(
   try {
     const { assetnumber, recordId } = params;
     if (!ObjectId.isValid(recordId)) {
-      return NextResponse.json({ error: 'Invalid record id.' }, { status: 400 });
+      return apiJson({ error: 'Invalid record id.' }, { status: 400 });
     }
 
     const { db } = await connectToDatabase();
@@ -93,11 +94,11 @@ export async function DELETE(
       .deleteOne({ _id: new ObjectId(recordId), assetnumber });
 
     if (result.deletedCount === 0) {
-      return NextResponse.json({ error: 'Record not found.' }, { status: 404 });
+      return apiJson({ error: 'Record not found.' }, { status: 404 });
     }
-    return NextResponse.json({ success: true });
+    return apiJson({ success: true });
   } catch (error) {
     console.error('DELETE portable modification:', error);
-    return NextResponse.json({ error: 'Failed to delete modification' }, { status: 500 });
+    return apiJson({ error: 'Failed to delete modification' }, { status: 500 });
   }
 }

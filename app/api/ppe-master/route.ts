@@ -3,13 +3,14 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '../auth/[...nextauth]/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import { PPEMaster, PPEMasterInsert, PPETransactionInsert, PPEStockBalanceInsert, PPEApiResponse } from '@/types/ppe';
+import { apiJson } from '@/lib/api-response';
 
 // GET - Fetch all PPE master records
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      return apiJson({ success: false, error: 'Unauthorized: sign in before using this feature' }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -59,10 +60,10 @@ export async function GET(request: NextRequest) {
       }
     };
 
-    return NextResponse.json(response);
+    return apiJson(response);
   } catch (error) {
     console.error('Error fetching PPE master records:', error);
-    return NextResponse.json(
+    return apiJson(
       { success: false, error: 'Failed to fetch PPE master records' },
       { status: 500 }
     );
@@ -74,7 +75,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      return apiJson({ success: false, error: 'Unauthorized: sign in before using this feature' }, { status: 401 });
     }
 
     const body = await request.json();
@@ -82,7 +83,7 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!ppeId || !ppeName || !materialCode || !life || !lifeUOM) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'Missing required fields' },
         { status: 400 }
       );
@@ -90,7 +91,7 @@ export async function POST(request: NextRequest) {
 
     // Validate initial stock
     if (!initialStock || initialStock < 0) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'Initial stock is required and must be non-negative' },
         { status: 400 }
       );
@@ -98,7 +99,7 @@ export async function POST(request: NextRequest) {
 
     // Validate life UOM
     if (!['week', 'month', 'year'].includes(lifeUOM)) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'Invalid life UOM. Must be week, month, or year' },
         { status: 400 }
       );
@@ -110,7 +111,7 @@ export async function POST(request: NextRequest) {
     // Check if PPE ID already exists
     const existingPPE = await collection.findOne({ ppeId }) as PPEMaster | null;
     if (existingPPE) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'PPE ID already exists' },
         { status: 400 }
       );
@@ -173,13 +174,13 @@ export async function POST(request: NextRequest) {
         message: 'PPE master record and initial stock created successfully'
       };
 
-      return NextResponse.json(response, { status: 201 });
+      return apiJson(response, { status: 201 });
     } finally {
       await dbSession.endSession();
     }
   } catch (error) {
     console.error('Error creating PPE master record:', error);
-    return NextResponse.json(
+    return apiJson(
       { success: false, error: 'Failed to create PPE master record' },
       { status: 500 }
     );

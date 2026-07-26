@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 const COLLECTION = 'facilityasset';
 
@@ -65,7 +66,7 @@ export async function GET(request: Request) {
 
     if (!hasNum && !hasName) {
       const all = await collection.find({}).sort({ assetnumber: 1 }).toArray();
-      return NextResponse.json(all);
+      return apiJson(all);
     }
 
     const query: Record<string, unknown> = {};
@@ -77,10 +78,10 @@ export async function GET(request: Request) {
     }
 
     const rows = await collection.find(query).sort({ assetnumber: 1 }).toArray();
-    return NextResponse.json(rows);
+    return apiJson(rows);
   } catch (error) {
     console.error('Failed to fetch facility assets:', error);
-    return NextResponse.json({ error: 'Failed to fetch facility assets' }, { status: 500 });
+    return apiJson({ error: 'Failed to fetch facility assets' }, { status: 500 });
   }
 }
 
@@ -89,12 +90,12 @@ export async function POST(request: Request) {
     const body = await request.json();
     const parsed = parseBody(body);
     if ('error' in parsed) {
-      return NextResponse.json({ error: parsed.error }, { status: 400 });
+      return apiJson({ error: parsed.error }, { status: 400 });
     }
 
     const { doc } = parsed;
     if (!doc.assetnumber || !doc.assetdescription) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'Asset Number and Asset Description are required.' },
         { status: 400 }
       );
@@ -105,7 +106,7 @@ export async function POST(request: Request) {
 
     const existing = await collection.findOne({ assetnumber: doc.assetnumber });
     if (existing) {
-      return NextResponse.json(
+      return apiJson(
         { error: `Facility asset with asset number "${doc.assetnumber}" already exists.` },
         { status: 409 }
       );
@@ -131,9 +132,9 @@ export async function POST(request: Request) {
 
     const result = await collection.insertOne(insertDoc);
     const created = await collection.findOne({ _id: result.insertedId });
-    return NextResponse.json(created, { status: 201 });
+    return apiJson(created, { status: 201 });
   } catch (error) {
     console.error('Failed to create facility asset:', error);
-    return NextResponse.json({ error: 'Failed to create facility asset' }, { status: 500 });
+    return apiJson({ error: 'Failed to create facility asset' }, { status: 500 });
   }
 }

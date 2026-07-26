@@ -3,6 +3,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../auth/[...nextauth]/auth';
+import { apiJson } from '@/lib/api-response';
 
 export async function GET(
   request: Request,
@@ -12,8 +13,8 @@ export async function GET(
     // Check authentication
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
+      return apiJson(
+        { error: 'Unauthorized: sign in before using this feature' },
         { status: 401 }
       );
     }
@@ -25,16 +26,16 @@ export async function GET(
       .findOne({ materialid: params.materialId });
 
     if (!material) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'Project issued material not found' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(material);
+    return apiJson(material);
   } catch (err) {
     console.error('Failed to fetch project issued material:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to fetch project issued material' },
       { status: 500 }
     );
@@ -49,8 +50,8 @@ export async function PUT(
     // Check authentication
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
+      return apiJson(
+        { error: 'Unauthorized: sign in before using this feature' },
         { status: 401 }
       );
     }
@@ -72,16 +73,16 @@ export async function PUT(
       );
 
     if (result.matchedCount === 0) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'Project issued material not found' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({ success: true });
+    return apiJson({ success: true });
   } catch (err) {
     console.error('Failed to update project issued material:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to update project issued material' },
       { status: 500 }
     );
@@ -96,8 +97,8 @@ export async function DELETE(
     // Check authentication
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
+      return apiJson(
+        { error: 'Unauthorized: sign in before using this feature' },
         { status: 401 }
       );
     }
@@ -109,16 +110,16 @@ export async function DELETE(
       .deleteOne({ materialid: params.materialId });
 
     if (result.deletedCount === 0) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'Project issued material not found' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({ success: true });
+    return apiJson({ success: true });
   } catch (err) {
     console.error('Failed to delete project issued material:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to delete project issued material' },
       { status: 500 }
     );

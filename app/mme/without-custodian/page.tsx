@@ -352,6 +352,7 @@ export default function MMEWithoutCustodianPage() {
       ),
       cell: ({ row }) => {
         const value = row.getValue('acquiredvalue');
+        if ((value as unknown) === '***') return '***';
         return typeof value === 'number' ? new Intl.NumberFormat('en-US', {
           style: 'currency',
           currency: 'SAR'

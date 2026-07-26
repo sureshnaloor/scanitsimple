@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 export async function GET(request: Request) {
   try {
@@ -11,7 +12,7 @@ export async function GET(request: Request) {
 
     // Return empty array if both parameters are empty or null
     if (!assetNumber?.trim() && !assetName?.trim()) {
-      return NextResponse.json([]);
+      return apiJson([]);
     }
     
     // Build query based on provided parameters
@@ -28,10 +29,10 @@ export async function GET(request: Request) {
       .find(query)
       .toArray();
 
-    return NextResponse.json(assets);
+    return apiJson(assets);
   } catch (err) {
     console.error('Failed to fetch equipments:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to fetch equipments' },
       { status: 500 }
     );
@@ -43,10 +44,10 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { db } = await connectToDatabase();
     const result = await db.collection('equipmentandtools').insertOne(body);
-    return NextResponse.json(result, { status: 201 });
+    return apiJson(result, { status: 201 });
   } catch (err) {
     console.error('Failed to create asset:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to create asset' },
       { status: 500 }
     );

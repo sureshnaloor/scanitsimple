@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 const COLLECTION = 'softwareasset';
 
@@ -100,14 +101,14 @@ export async function POST(request: Request) {
     const rows = Array.isArray(body?.rows) ? body.rows : [];
 
     if (!['validate', 'insert'].includes(action)) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'Invalid action. Use "validate" or "insert".' },
         { status: 400 }
       );
     }
 
     if (!rows.length) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'No rows received for processing.' },
         { status: 400 }
       );
@@ -115,7 +116,7 @@ export async function POST(request: Request) {
 
     const { errors, normalizedRows } = validateRows(rows);
     if (errors.length > 0) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'Validation failed.', errors },
         { status: 400 }
       );
@@ -136,7 +137,7 @@ export async function POST(request: Request) {
     const skippedExisting = normalizedRows.filter((row) => existingAssetSet.has(row.assetnumber));
 
     if (action === 'validate') {
-      return NextResponse.json({
+      return apiJson({
         success: true,
         data: {
           totalUploaded: normalizedRows.length,
@@ -155,7 +156,7 @@ export async function POST(request: Request) {
     }
 
     if (rowsToInsert.length === 0) {
-      return NextResponse.json(
+      return apiJson(
         {
           success: false,
           error: 'No new software assets to insert. All uploaded asset numbers already exist.',
@@ -184,7 +185,7 @@ export async function POST(request: Request) {
 
     const result = await collection.insertMany(insertDocs);
 
-    return NextResponse.json({
+    return apiJson({
       success: true,
       data: {
         insertedCount: result.insertedCount,
@@ -199,7 +200,7 @@ export async function POST(request: Request) {
   } catch (error: unknown) {
     console.error('Error in software assets bulk import:', error);
     const message = error instanceof Error ? error.message : String(error);
-    return NextResponse.json(
+    return apiJson(
       {
         success: false,
         error: 'Failed to process software assets bulk import.',

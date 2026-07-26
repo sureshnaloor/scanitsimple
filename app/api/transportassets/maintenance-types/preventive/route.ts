@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { ObjectId, type Db } from 'mongodb';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 const COLLECTION = 'transport_maint_master_preventive';
 
@@ -33,10 +34,10 @@ export async function GET() {
       .find({})
       .sort({ name: 1 })
       .toArray();
-    return NextResponse.json(rows);
+    return apiJson(rows);
   } catch (error) {
     console.error('GET preventive maintenance types:', error);
-    return NextResponse.json({ error: 'Failed to load types' }, { status: 500 });
+    return apiJson({ error: 'Failed to load types' }, { status: 500 });
   }
 }
 
@@ -45,7 +46,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const name = String(body?.name ?? '').trim();
     if (!name) {
-      return NextResponse.json({ error: 'Name is required.' }, { status: 400 });
+      return apiJson({ error: 'Name is required.' }, { status: 400 });
     }
 
     const { db } = await connectToDatabase();
@@ -54,15 +55,15 @@ export async function POST(request: Request) {
 
     const dup = await col.findOne({ name: { $regex: new RegExp(`^${escapeRegex(name)}$`, 'i') } });
     if (dup) {
-      return NextResponse.json({ error: 'A type with this name already exists.' }, { status: 409 });
+      return apiJson({ error: 'A type with this name already exists.' }, { status: 409 });
     }
 
     const result = await col.insertOne({ name, createdAt: new Date() });
     const doc = await col.findOne({ _id: result.insertedId });
-    return NextResponse.json(doc, { status: 201 });
+    return apiJson(doc, { status: 201 });
   } catch (error) {
     console.error('POST preventive maintenance type:', error);
-    return NextResponse.json({ error: 'Failed to create type' }, { status: 500 });
+    return apiJson({ error: 'Failed to create type' }, { status: 500 });
   }
 }
 
@@ -72,10 +73,10 @@ export async function PUT(request: Request) {
     const id = String(body?._id ?? body?.id ?? '').trim();
     const name = String(body?.name ?? '').trim();
     if (!id || !ObjectId.isValid(id)) {
-      return NextResponse.json({ error: 'Valid id is required.' }, { status: 400 });
+      return apiJson({ error: 'Valid id is required.' }, { status: 400 });
     }
     if (!name) {
-      return NextResponse.json({ error: 'Name is required.' }, { status: 400 });
+      return apiJson({ error: 'Name is required.' }, { status: 400 });
     }
 
     const { db } = await connectToDatabase();
@@ -87,18 +88,18 @@ export async function PUT(request: Request) {
       name: { $regex: new RegExp(`^${escapeRegex(name)}$`, 'i') }
     });
     if (dup) {
-      return NextResponse.json({ error: 'A type with this name already exists.' }, { status: 409 });
+      return apiJson({ error: 'A type with this name already exists.' }, { status: 409 });
     }
 
     const ur = await col.updateOne({ _id: oid }, { $set: { name } });
     if (ur.matchedCount === 0) {
-      return NextResponse.json({ error: 'Not found' }, { status: 404 });
+      return apiJson({ error: 'Not found' }, { status: 404 });
     }
     const updated = await col.findOne({ _id: oid });
-    return NextResponse.json(updated);
+    return apiJson(updated);
   } catch (error) {
     console.error('PUT preventive maintenance type:', error);
-    return NextResponse.json({ error: 'Failed to update type' }, { status: 500 });
+    return apiJson({ error: 'Failed to update type' }, { status: 500 });
   }
 }
 
@@ -107,18 +108,18 @@ export async function DELETE(request: Request) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id')?.trim() ?? '';
     if (!id || !ObjectId.isValid(id)) {
-      return NextResponse.json({ error: 'Valid id query param is required.' }, { status: 400 });
+      return apiJson({ error: 'Valid id query param is required.' }, { status: 400 });
     }
 
     const { db } = await connectToDatabase();
     const result = await db.collection(COLLECTION).deleteOne({ _id: new ObjectId(id) });
     if (result.deletedCount === 0) {
-      return NextResponse.json({ error: 'Not found' }, { status: 404 });
+      return apiJson({ error: 'Not found' }, { status: 404 });
     }
-    return NextResponse.json({ success: true });
+    return apiJson({ success: true });
   } catch (error) {
     console.error('DELETE preventive maintenance type:', error);
-    return NextResponse.json({ error: 'Failed to delete type' }, { status: 500 });
+    return apiJson({ error: 'Failed to delete type' }, { status: 500 });
   }
 }
 

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 const RECORDS = 'facility_oncall_maintenance';
 const KINDS = new Set(['service', 'repair']);
@@ -14,7 +15,7 @@ export async function GET(
 
     const asset = await db.collection('facilityasset').findOne({ assetnumber });
     if (!asset) {
-      return NextResponse.json({ error: 'Facility asset not found.' }, { status: 404 });
+      return apiJson({ error: 'Facility asset not found.' }, { status: 404 });
     }
 
     const rows = await db
@@ -22,10 +23,10 @@ export async function GET(
       .find({ assetnumber })
       .sort({ createdAt: -1 })
       .toArray();
-    return NextResponse.json(rows);
+    return apiJson(rows);
   } catch (error) {
     console.error('GET facility on-call maintenance:', error);
-    return NextResponse.json({ error: 'Failed to load on-call maintenance records' }, { status: 500 });
+    return apiJson({ error: 'Failed to load on-call maintenance records' }, { status: 500 });
   }
 }
 
@@ -41,13 +42,13 @@ export async function POST(
     const remarks = String(body?.remarks ?? '').trim();
 
     if (!KINDS.has(recordType)) {
-      return NextResponse.json({ error: 'recordType must be service or repair.' }, { status: 400 });
+      return apiJson({ error: 'recordType must be service or repair.' }, { status: 400 });
     }
 
     const { db } = await connectToDatabase();
     const asset = await db.collection('facilityasset').findOne({ assetnumber });
     if (!asset) {
-      return NextResponse.json({ error: 'Facility asset not found.' }, { status: 404 });
+      return apiJson({ error: 'Facility asset not found.' }, { status: 404 });
     }
 
     const parseOptDate = (v: unknown) => {
@@ -69,9 +70,9 @@ export async function POST(
 
     const result = await db.collection(RECORDS).insertOne(doc);
     const created = await db.collection(RECORDS).findOne({ _id: result.insertedId });
-    return NextResponse.json(created, { status: 201 });
+    return apiJson(created, { status: 201 });
   } catch (error) {
     console.error('POST facility on-call maintenance:', error);
-    return NextResponse.json({ error: 'Failed to create on-call maintenance record' }, { status: 500 });
+    return apiJson({ error: 'Failed to create on-call maintenance record' }, { status: 500 });
   }
 }

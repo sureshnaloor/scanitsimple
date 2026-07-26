@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 export async function POST(request: Request) {
   try {
@@ -15,9 +16,9 @@ export async function POST(request: Request) {
       timestamp: new Date(timestamp),
     });
 
-    return NextResponse.json({ success: true, id: result.insertedId });
+    return apiJson({ success: true, id: result.insertedId });
   } catch (error) {
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to log location' },
       { status: 500 }
     );

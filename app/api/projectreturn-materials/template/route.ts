@@ -2,14 +2,15 @@ import { NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../auth/[...nextauth]/auth';
+import { apiJson } from '@/lib/api-response';
 
 export async function GET(request: Request) {
   try {
     // Check authentication
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
+      return apiJson(
+        { error: 'Unauthorized: sign in before using this feature' },
         { status: 401 }
       );
     }
@@ -87,7 +88,7 @@ export async function GET(request: Request) {
     });
   } catch (err) {
     console.error('Failed to generate project return materials template:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to generate template' },
       { status: 500 }
     );

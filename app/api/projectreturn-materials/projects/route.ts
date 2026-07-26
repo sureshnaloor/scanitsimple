@@ -2,14 +2,15 @@ import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../auth/[...nextauth]/auth';
+import { apiJson } from '@/lib/api-response';
 
 export async function GET() {
   try {
     // Check authentication
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
+      return apiJson(
+        { error: 'Unauthorized: sign in before using this feature' },
         { status: 401 }
       );
     }
@@ -26,10 +27,10 @@ export async function GET() {
       .filter((project): project is string => project != null && project.trim() !== '')
       .sort();
 
-    return NextResponse.json(sortedProjects);
+    return apiJson(sortedProjects);
   } catch (err) {
     console.error('Failed to fetch projects from returned materials:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to fetch projects' },
       { status: 500 }
     );

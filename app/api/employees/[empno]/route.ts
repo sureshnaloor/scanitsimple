@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '../../auth/[...nextauth]/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import { Employee, PPEApiResponse } from '@/types/ppe';
+import { apiJson } from '@/lib/api-response';
 
 async function validateDepartmentAndDesignation(
   department: unknown,
@@ -37,7 +38,7 @@ export async function GET(
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      return apiJson({ success: false, error: 'Unauthorized: sign in before using this feature' }, { status: 401 });
     }
 
     const { empno } = params;
@@ -48,7 +49,7 @@ export async function GET(
     const employee = await collection.findOne({ empno }) as Employee | null;
 
     if (!employee) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'Employee not found' },
         { status: 404 }
       );
@@ -59,10 +60,10 @@ export async function GET(
       data: employee
     };
 
-    return NextResponse.json(response);
+    return apiJson(response);
   } catch (error) {
     console.error('Error fetching employee:', error);
-    return NextResponse.json(
+    return apiJson(
       { success: false, error: 'Failed to fetch employee' },
       { status: 500 }
     );
@@ -77,7 +78,7 @@ export async function PUT(
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      return apiJson({ success: false, error: 'Unauthorized: sign in before using this feature' }, { status: 401 });
     }
 
     const { empno } = params;
@@ -86,7 +87,7 @@ export async function PUT(
 
     // Validate required fields
     if (!empname) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'Employee name is required' },
         { status: 400 }
       );
@@ -94,7 +95,7 @@ export async function PUT(
 
     const validationError = await validateDepartmentAndDesignation(department, designation);
     if (validationError) {
-      return NextResponse.json({ success: false, error: validationError }, { status: 400 });
+      return apiJson({ success: false, error: validationError }, { status: 400 });
     }
 
     const { db } = await connectToDatabase();
@@ -103,7 +104,7 @@ export async function PUT(
     // Check if employee exists
     const existingEmployee = await collection.findOne({ empno }) as Employee | null;
     if (!existingEmployee) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'Employee not found' },
         { status: 404 }
       );
@@ -126,7 +127,7 @@ export async function PUT(
     );
 
     if (result.matchedCount === 0) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'Employee not found' },
         { status: 404 }
       );
@@ -141,10 +142,10 @@ export async function PUT(
       message: 'Employee updated successfully'
     };
 
-    return NextResponse.json(response);
+    return apiJson(response);
   } catch (error) {
     console.error('Error updating employee:', error);
-    return NextResponse.json(
+    return apiJson(
       { success: false, error: 'Failed to update employee' },
       { status: 500 }
     );
@@ -159,7 +160,7 @@ export async function DELETE(
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      return apiJson({ success: false, error: 'Unauthorized: sign in before using this feature' }, { status: 401 });
     }
 
     const { empno } = params;
@@ -170,7 +171,7 @@ export async function DELETE(
     // Check if employee exists
     const existingEmployee = await collection.findOne({ empno }) as Employee | null;
     if (!existingEmployee) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'Employee not found' },
         { status: 404 }
       );
@@ -189,7 +190,7 @@ export async function DELETE(
     );
 
     if (result.matchedCount === 0) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'Employee not found' },
         { status: 404 }
       );
@@ -201,10 +202,10 @@ export async function DELETE(
       message: 'Employee deactivated successfully'
     };
 
-    return NextResponse.json(response);
+    return apiJson(response);
   } catch (error) {
     console.error('Error deactivating employee:', error);
-    return NextResponse.json(
+    return apiJson(
       { success: false, error: 'Failed to deactivate employee' },
       { status: 500 }
     );

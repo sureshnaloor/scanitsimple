@@ -194,7 +194,7 @@ export default function DisposedMaterialDetailPage() {
                     Unit Rate
                   </label>
                   <p className="px-3 py-2 bg-gray-50 dark:bg-gray-700 rounded-lg text-gray-900 dark:text-white">
-                    {new Intl.NumberFormat('en-US', {
+                    {(material.sourceUnitRate as unknown) === '***' ? '***' : new Intl.NumberFormat('en-US', {
                       style: 'currency',
                       currency: 'SAR'
                     }).format(material.sourceUnitRate)}

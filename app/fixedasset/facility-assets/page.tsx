@@ -18,6 +18,9 @@ import FixedAssetStatusBadge from '@/app/components/fixedasset/FixedAssetStatusB
 import FixedAssetListShell from '@/app/components/fixedasset/FixedAssetListShell';
 import { fap, formatCurrency } from '@/lib/fixedAssetPageDesign';
 import { computeAssetStats, sortBtn, th } from '@/lib/fixedAssetListHelpers';
+import { useAccess } from '@/lib/use-access';
+import { useAssetMasters } from '@/lib/use-asset-masters';
+import MasterDataSelects from '@/app/components/fixedasset/MasterDataSelects';
 
 interface FacilityAsset {
   _id: string;
@@ -65,6 +68,7 @@ function formatDateInput(value: string | Date | null | undefined): string {
 }
 
 export default function FacilityAssetsPage() {
+  const { isAdmin } = useAccess();
   const [data, setData] = useState<FacilityAsset[]>([]);
   const [assetNumberSearch, setAssetNumberSearch] = useState('');
   const [assetNameSearch, setAssetNameSearch] = useState('');
@@ -93,6 +97,10 @@ export default function FacilityAssetsPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [editForm, setEditForm] = useState(emptyForm());
   const [editAssetNumber, setEditAssetNumber] = useState('');
+
+  // Master-data dropdown options for the add form and edit dialog
+  const addMasters = useAssetMasters(true, form.assetcategory);
+  const editMasters = useAssetMasters(true, editForm.assetcategory);
 
   const openBulkErrorModal = (title: string, content: string) => {
     setErrorModalTitle(title);
@@ -524,14 +532,18 @@ export default function FacilityAssetsPage() {
       header: () => <span className={th}>Actions</span>,
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
-          <button type="button" onClick={() => openEdit(row.original)} className={fap.btnSecondary} aria-label="Edit">
-            <PencilIcon className="h-4 w-4" />
-            Edit
-          </button>
-          <button type="button" onClick={() => handleDelete(row.original.assetnumber)} className={fap.btnDanger} aria-label="Delete">
-            <TrashIcon className="h-4 w-4" />
-            Delete
-          </button>
+          {isAdmin && (
+            <>
+              <button type="button" onClick={() => openEdit(row.original)} className={fap.btnSecondary} aria-label="Edit">
+                <PencilIcon className="h-4 w-4" />
+                Edit
+              </button>
+              <button type="button" onClick={() => handleDelete(row.original.assetnumber)} className={fap.btnDanger} aria-label="Delete">
+                <TrashIcon className="h-4 w-4" />
+                Delete
+              </button>
+            </>
+          )}
         </div>
       ),
     },
@@ -567,6 +579,7 @@ export default function FacilityAssetsPage() {
 
         <FixedAssetStatBar stats={stats} />
 
+        {isAdmin && (
         <form onSubmit={handleAddSubmit} className={`${fap.card} ${fap.cardPadding} mb-8 space-y-4`}>
           <h2 className={fap.sectionTitle}>Add facility asset</h2>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -578,11 +591,16 @@ export default function FacilityAssetsPage() {
               <label className={fap.label}>Description *</label>
               <input className={fap.input} value={form.assetdescription} onChange={(e) => setForm((f) => ({ ...f, assetdescription: e.target.value }))} placeholder="e.g. Split AC 2 ton" required />
             </div>
+            <MasterDataSelects
+              category={form.assetcategory}
+              subcategory={form.assetsubcategory}
+              status={form.assetstatus}
+              categories={addMasters.categories}
+              subcategories={addMasters.subcategories}
+              onPatch={(p) => setForm((f) => ({ ...f, ...p }))}
+            />
             {(
               [
-                ['assetcategory', 'Category'],
-                ['assetsubcategory', 'Subcategory'],
-                ['assetstatus', 'Status'],
                 ['location', 'Location'],
                 ['department', 'Department'],
               ] as const
@@ -606,6 +624,7 @@ export default function FacilityAssetsPage() {
             <button type="button" onClick={() => { resetBulkState(); setShowBulkInsertModal(true); }} className={fap.btnSecondary}>Bulk insert</button>
           </div>
         </form>
+        )}
 
         <div className={fap.tableWrap}>
           <div className="border-b border-slate-200 dark:border-[#2A3B4C]/50 px-6 py-4">
@@ -700,11 +719,16 @@ export default function FacilityAssetsPage() {
                   <label className={fap.label}>Description</label>
                   <input className={fap.input} value={editForm.assetdescription} onChange={(e) => setEditForm((f) => ({ ...f, assetdescription: e.target.value }))} />
                 </div>
+                <MasterDataSelects
+                  category={editForm.assetcategory}
+                  subcategory={editForm.assetsubcategory}
+                  status={editForm.assetstatus}
+                  categories={editMasters.categories}
+                  subcategories={editMasters.subcategories}
+                  onPatch={(p) => setEditForm((f) => ({ ...f, ...p }))}
+                />
                 {(
                   [
-                    ['assetcategory', 'Category'],
-                    ['assetsubcategory', 'Subcategory'],
-                    ['assetstatus', 'Status'],
                     ['location', 'Location'],
                     ['department', 'Department'],
                   ] as const

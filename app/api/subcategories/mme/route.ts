@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
+import { apiJson } from '@/lib/api-response';
 
 export async function GET(request: Request) {
   try {
@@ -10,9 +11,9 @@ export async function GET(request: Request) {
     
     const query = category ? { category } : {};
     const subcategories = await db.collection('MME_SUBCATEGORIES').find(query).toArray();
-    return NextResponse.json(subcategories);
+    return apiJson(subcategories);
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch MME subcategories' }, { status: 500 });
+    return apiJson({ error: 'Failed to fetch MME subcategories' }, { status: 500 });
   }
 }
 
@@ -21,9 +22,9 @@ export async function POST(request: Request) {
     const { category, name } = await request.json();
     const { db } = await connectToDatabase();
     const result = await db.collection('MME_SUBCATEGORIES').insertOne({ category, name });
-    return NextResponse.json(result, { status: 201 });
+    return apiJson(result, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to create MME subcategory' }, { status: 500 });
+    return apiJson({ error: 'Failed to create MME subcategory' }, { status: 500 });
   }
 }
 
@@ -35,9 +36,9 @@ export async function PUT(request: Request) {
       { _id: new ObjectId(_id) },
       { $set: { category, name } }
     );
-    return NextResponse.json(result);
+    return apiJson(result);
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to update MME subcategory' }, { status: 500 });
+    return apiJson({ error: 'Failed to update MME subcategory' }, { status: 500 });
   }
 }
 
@@ -51,8 +52,8 @@ export async function DELETE(request: Request) {
     const result = await db.collection('MME_SUBCATEGORIES').deleteOne({
       _id: new ObjectId(id)
     });
-    return NextResponse.json(result);
+    return apiJson(result);
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to delete MME subcategory' }, { status: 500 });
+    return apiJson({ error: 'Failed to delete MME subcategory' }, { status: 500 });
   }
 } 

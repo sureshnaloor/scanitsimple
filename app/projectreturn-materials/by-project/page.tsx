@@ -90,6 +90,10 @@ export default function ReturnedMaterialsByProjectPage() {
       
       // Calculate current unit rate and current value for each material
       const materialsWithCurrentRate: MaterialWithCurrentRate[] = materials.map(material => {
+        // Guest-masked rates stay masked in all derived figures
+        if ((material.sourceUnitRate as unknown) === '***') {
+          return { ...material, currentUnitRate: '***' as any, currentValue: '***' as any };
+        }
         const currentUnitRate = calculateCurrentUnitRate(
           material.sourceUnitRate || 0,
           material.receivedInWarehouseDate
@@ -182,6 +186,7 @@ export default function ReturnedMaterialsByProjectPage() {
       header: 'Source Unit Rate',
       cell: ({ row }) => {
         const rate = row.getValue('sourceUnitRate') as number;
+        if ((rate as unknown) === '***') return '***';
         return (
           <div className="text-gray-900 dark:text-white font-medium">
             {new Intl.NumberFormat('en-US', {
@@ -197,6 +202,7 @@ export default function ReturnedMaterialsByProjectPage() {
       header: 'Current Unit Rate',
       cell: ({ row }) => {
         const rate = row.getValue('currentUnitRate') as number;
+        if ((rate as unknown) === '***') return '***';
         return (
           <div className="text-green-700 dark:text-green-400 font-semibold">
             {new Intl.NumberFormat('en-US', {
@@ -212,6 +218,7 @@ export default function ReturnedMaterialsByProjectPage() {
       header: 'Current Value',
       cell: ({ row }) => {
         const value = row.getValue('currentValue') as number;
+        if ((value as unknown) === '***') return '***';
         return (
           <div className="text-green-700 dark:text-green-400 font-semibold">
             {new Intl.NumberFormat('en-US', {
@@ -278,7 +285,7 @@ export default function ReturnedMaterialsByProjectPage() {
             </p>
             <p className="text-sm text-blue-900 dark:text-blue-200">
               <span className="font-semibold">Total Current Value:</span>{' '}
-              {new Intl.NumberFormat('en-US', {
+              {data.some((m) => (m.currentValue as unknown) === '***') ? '***' : new Intl.NumberFormat('en-US', {
                 style: 'currency',
                 currency: 'SAR'
               }).format(

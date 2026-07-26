@@ -3,13 +3,14 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import { Employee, PPEApiResponse } from '@/types/ppe';
+import { apiJson } from '@/lib/api-response';
 
 // GET - Search employees with minimum 3 characters for name search
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      return apiJson({ success: false, error: 'Unauthorized: sign in before using this feature' }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
 
     if (!search || search.trim() === '') {
       console.log('Validation failed: search term is empty');
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'Search term is required' },
         { status: 400 }
       );
@@ -39,7 +40,7 @@ export async function GET(request: NextRequest) {
     // For numeric search, allow any length
     if (search.length < 3 && !/^\d+$/.test(search)) {
       console.log('Validation failed: search term too short', { search, length: search.length });
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: `Minimum 3 characters required for name search. Received: "${search}" (${search.length} chars)` },
         { status: 400 }
       );
@@ -76,11 +77,11 @@ export async function GET(request: NextRequest) {
       }
     };
 
-    return NextResponse.json(response);
+    return apiJson(response);
   } catch (error) {
     console.error('Error searching employees:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json(
+    return apiJson(
       { success: false, error: `Failed to search employees: ${errorMessage}` },
       { status: 500 }
     );

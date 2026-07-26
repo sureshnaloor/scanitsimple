@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../auth/[...nextauth]/auth';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 // GET - Debug endpoint to check transaction data for a specific PPE
 export async function GET(
@@ -11,7 +12,7 @@ export async function GET(
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      return apiJson({ success: false, error: 'Unauthorized: sign in before using this feature' }, { status: 401 });
     }
 
     const { ppeId } = params;
@@ -41,10 +42,10 @@ export async function GET(
       }
     };
 
-    return NextResponse.json(response);
+    return apiJson(response);
   } catch (error) {
     console.error('Error in debug endpoint:', error);
-    return NextResponse.json(
+    return apiJson(
       { success: false, error: 'Failed to fetch debug data' },
       { status: 500 }
     );

@@ -4,6 +4,7 @@ import { authOptions } from '../../auth/[...nextauth]/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import { PPEMaster, PPEApiResponse } from '@/types/ppe';
 import { ObjectId } from 'mongodb';
+import { apiJson } from '@/lib/api-response';
 
 // GET - Fetch specific PPE master record
 export async function GET(
@@ -13,7 +14,7 @@ export async function GET(
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      return apiJson({ success: false, error: 'Unauthorized: sign in before using this feature' }, { status: 401 });
     }
 
     const { ppeId } = params;
@@ -24,7 +25,7 @@ export async function GET(
     const ppeRecord = await collection.findOne({ ppeId }) as PPEMaster | null;
 
     if (!ppeRecord) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'PPE record not found' },
         { status: 404 }
       );
@@ -35,10 +36,10 @@ export async function GET(
       data: ppeRecord
     };
 
-    return NextResponse.json(response);
+    return apiJson(response);
   } catch (error) {
     console.error('Error fetching PPE master record:', error);
-    return NextResponse.json(
+    return apiJson(
       { success: false, error: 'Failed to fetch PPE master record' },
       { status: 500 }
     );
@@ -53,7 +54,7 @@ export async function PUT(
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      return apiJson({ success: false, error: 'Unauthorized: sign in before using this feature' }, { status: 401 });
     }
 
     const { ppeId } = params;
@@ -62,7 +63,7 @@ export async function PUT(
 
     // Validate required fields
     if (!ppeName || !materialCode || !life || !lifeUOM) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'Missing required fields' },
         { status: 400 }
       );
@@ -70,7 +71,7 @@ export async function PUT(
 
     // Validate life UOM
     if (!['week', 'month', 'year'].includes(lifeUOM)) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'Invalid life UOM. Must be week, month, or year' },
         { status: 400 }
       );
@@ -82,7 +83,7 @@ export async function PUT(
     // Check if PPE record exists
     const existingPPE = await collection.findOne({ ppeId }) as PPEMaster | null;
     if (!existingPPE) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'PPE record not found' },
         { status: 404 }
       );
@@ -106,7 +107,7 @@ export async function PUT(
     );
 
     if (result.matchedCount === 0) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'PPE record not found' },
         { status: 404 }
       );
@@ -121,10 +122,10 @@ export async function PUT(
       message: 'PPE master record updated successfully'
     };
 
-    return NextResponse.json(response);
+    return apiJson(response);
   } catch (error) {
     console.error('Error updating PPE master record:', error);
-    return NextResponse.json(
+    return apiJson(
       { success: false, error: 'Failed to update PPE master record' },
       { status: 500 }
     );
@@ -139,7 +140,7 @@ export async function DELETE(
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      return apiJson({ success: false, error: 'Unauthorized: sign in before using this feature' }, { status: 401 });
     }
 
     const { ppeId } = params;
@@ -150,7 +151,7 @@ export async function DELETE(
     // Check if PPE record exists
     const existingPPE = await collection.findOne({ ppeId }) as PPEMaster | null;
     if (!existingPPE) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'PPE record not found' },
         { status: 404 }
       );
@@ -161,7 +162,7 @@ export async function DELETE(
     const issueCount = await issueRecordsCollection.countDocuments({ ppeId });
     
     if (issueCount > 0) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'Cannot delete PPE record. It is being used in issue records.' },
         { status: 400 }
       );
@@ -170,7 +171,7 @@ export async function DELETE(
     const result = await collection.deleteOne({ ppeId });
 
     if (result.deletedCount === 0) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'PPE record not found' },
         { status: 404 }
       );
@@ -182,10 +183,10 @@ export async function DELETE(
       message: 'PPE master record deleted successfully'
     };
 
-    return NextResponse.json(response);
+    return apiJson(response);
   } catch (error) {
     console.error('Error deleting PPE master record:', error);
-    return NextResponse.json(
+    return apiJson(
       { success: false, error: 'Failed to delete PPE master record' },
       { status: 500 }
     );

@@ -9,8 +9,10 @@ import { ArrowUpDown, Plus, Edit, Trash2 } from 'lucide-react';
 import ResponsiveTanStackTable from '@/components/ui/responsive-tanstack-table';
 import { UnidentifiedItem } from '@/types/asset';
 import { useAppTheme } from '@/app/contexts/ThemeContext';
+import { useAccess } from '@/lib/use-access';
 export default function UnidentifiedMMEPage() {
   const { theme } = useAppTheme();
+  const { isAdmin } = useAccess();
   const [data, setData] = useState<UnidentifiedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -302,6 +304,7 @@ export default function UnidentifiedMMEPage() {
       ),
       cell: ({ row }) => {
         const value = row.getValue('assetvalue') as number;
+        if ((value as unknown) === '***') return '***';
         return value ? new Intl.NumberFormat('en-US', {
           style: 'currency',
           currency: 'SAR'
@@ -329,20 +332,24 @@ export default function UnidentifiedMMEPage() {
       header: () => <span className={backgroundStyles.textColor}>Actions</span>,
       cell: ({ row }) => (
         <div className="flex gap-2">
-          <button
-            onClick={() => setEditingItem(row.original)}
-            className={`p-1 transition-colors ${backgroundStyles.actionEdit}`}
-            title="Edit"
-          >
-            <Edit className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => setDeleteItem(row.original)}
-            className={`p-1 transition-colors ${backgroundStyles.actionDelete}`}
-            title="Delete"
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
+          {isAdmin && (
+            <>
+              <button
+                onClick={() => setEditingItem(row.original)}
+                className={`p-1 transition-colors ${backgroundStyles.actionEdit}`}
+                title="Edit"
+              >
+                <Edit className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setDeleteItem(row.original)}
+                className={`p-1 transition-colors ${backgroundStyles.actionDelete}`}
+                title="Delete"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </>
+          )}
         </div>
       ),
     },
@@ -368,13 +375,15 @@ export default function UnidentifiedMMEPage() {
                 </h1>
                 <p className={`${backgroundStyles.headerSubtitle} text-lg`}>Manage unidentified MME equipment</p>
               </div>
-              <button
-                onClick={() => setShowAddModal(true)}
-                className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl ${backgroundStyles.addButton}`}
-              >
-                <Plus className="h-5 w-5" />
-                Add New
-              </button>
+              {isAdmin && (
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl ${backgroundStyles.addButton}`}
+                >
+                  <Plus className="h-5 w-5" />
+                  Add New
+                </button>
+              )}
             </div>
           </div>
         </div>

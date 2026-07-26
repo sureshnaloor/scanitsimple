@@ -11,8 +11,10 @@ import ResponsiveTanStackTable from '@/components/ui/responsive-tanstack-table';
 import { ToolData } from '@/types/tools';
 import AssetQRCode from '@/components/AssetQRCode';
 import { useAppTheme } from '@/app/contexts/ThemeContext';
+import { useAccess } from '@/lib/use-access';
 
 export default function ToolsPage() {
+  const { isAdmin } = useAccess();
   const { theme } = useAppTheme();
   const [data, setData] = useState<ToolData[]>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -345,6 +347,7 @@ export default function ToolsPage() {
       ),
       cell: ({ row }) => {
         const value = row.getValue('toolCost');
+        if ((value as unknown) === '***') return '***';
         return typeof value === 'number' ? new Intl.NumberFormat('en-US', {
           style: 'currency',
           currency: 'SAR'
@@ -391,18 +394,26 @@ export default function ToolsPage() {
       header: () => <span className={backgroundStyles.textColor}>Actions</span>,
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setEditingTool(row.original)}
-            className={`${backgroundStyles.actionEdit} transition-colors`}
-          >
-            <Edit className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => handleDeleteTool(row.original.assetnumber)}
-            className={`${backgroundStyles.actionDelete} transition-colors`}
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
+          {isAdmin && (
+            <>
+              <button
+                onClick={() => setEditingTool(row.original)}
+                className={`${backgroundStyles.actionEdit} transition-colors`}
+                title="Edit tool"
+                aria-label="Edit tool"
+              >
+                <Edit className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => handleDeleteTool(row.original.assetnumber)}
+                className={`${backgroundStyles.actionDelete} transition-colors`}
+                title="Delete tool"
+                aria-label="Delete tool"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </>
+          )}
         </div>
       ),
     },
@@ -436,13 +447,15 @@ export default function ToolsPage() {
                   </h1>
                   <p className={`${backgroundStyles.headerSubtitle} text-lg`}>Manage and track your tools inventory</p>
                 </div>
-                <button
-                  onClick={() => setShowAddForm(true)}
-                  className={`flex items-center gap-2 px-6 py-3 ${backgroundStyles.buttonAdd} rounded-xl font-semibold transition-all duration-300`}
-                >
-                  <Plus className="h-5 w-5" />
-                  Add Tool
-                </button>
+                {isAdmin && (
+                  <button
+                    onClick={() => setShowAddForm(true)}
+                    className={`flex items-center gap-2 px-6 py-3 ${backgroundStyles.buttonAdd} rounded-xl font-semibold transition-all duration-300`}
+                  >
+                    <Plus className="h-5 w-5" />
+                    Add Tool
+                  </button>
+                )}
               </div>
             </div>
           </div>

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 // GET custody records for specific asset
 export async function GET(
@@ -17,17 +18,17 @@ export async function GET(
       .toArray();
 
     if (!custodyRecords.length) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'No custody records found' },
         { status: 404 }
       );
     }
 
     console.log('Found custody records:', custodyRecords.length);
-    return NextResponse.json(custodyRecords);
+    return apiJson(custodyRecords);
   } catch (error) {
     console.error('Failed to fetch custody records:', error);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to fetch custody records' },
       { status: 500 }
     );
@@ -56,16 +57,16 @@ export async function PUT(
     );
 
     if (result.matchedCount === 0) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'Custody record not found' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(result);
+    return apiJson(result);
   } catch (error) {
     console.error('Failed to update custody record:', error);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to update custody record' },
       { status: 500 }
     );
@@ -84,16 +85,16 @@ export async function DELETE(
     });
 
     if (result.deletedCount === 0) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'Custody record not found' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(result);
+    return apiJson(result);
   } catch (error) {
     console.error('Failed to delete custody record:', error);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to delete custody record' },
       { status: 500 }
     );
@@ -118,7 +119,7 @@ export async function POST(
       });
 
     if (activeCustody) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'Asset already has an active custody record' },
         { status: 400 }
       );
@@ -143,10 +144,10 @@ export async function POST(
       .collection('equipmentcustody')
       .findOne({ _id: result.insertedId });
 
-    return NextResponse.json(newCustody);
+    return apiJson(newCustody);
   } catch (error) {
     console.error('Failed to create custody record:', error);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to create custody record' },
       { status: 500 }
     );

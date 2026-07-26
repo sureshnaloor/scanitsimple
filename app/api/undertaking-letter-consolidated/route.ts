@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { jsPDF } from 'jspdf';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,19 +9,19 @@ export async function GET(request: NextRequest) {
     const employeeNumber = searchParams.get('employeeNumber');
     
     if (!employeeNumber) {
-      return NextResponse.json({ error: 'Employee number is required' }, { status: 400 });
+      return apiJson({ error: 'Employee number is required' }, { status: 400 });
     }
 
     // Fetch employee details
     const employeeResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/users`);
     if (!employeeResponse.ok) {
-      return NextResponse.json({ error: 'Failed to fetch employee data' }, { status: 500 });
+      return apiJson({ error: 'Failed to fetch employee data' }, { status: 500 });
     }
     const employees: Array<{ employeenumber: string; employeename: string; department?: string; position?: string }> = await employeeResponse.json();
     const employee = employees.find(emp => emp.employeenumber === employeeNumber);
     
     if (!employee) {
-      return NextResponse.json({ error: 'Employee not found' }, { status: 404 });
+      return apiJson({ error: 'Employee not found' }, { status: 404 });
     }
 
     // Fetch user equipment list with full details
@@ -97,7 +98,7 @@ export async function GET(request: NextRequest) {
       ]).toArray();
     
     if (!equipmentData || equipmentData.length === 0) {
-      return NextResponse.json({ error: 'No equipment found for this employee' }, { status: 404 });
+      return apiJson({ error: 'No equipment found for this employee' }, { status: 404 });
     }
 
     // Create PDF document
@@ -310,6 +311,6 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Error generating consolidated undertaking letter:', error);
-    return NextResponse.json({ error: 'Failed to generate consolidated undertaking letter' }, { status: 500 });
+    return apiJson({ error: 'Failed to generate consolidated undertaking letter' }, { status: 500 });
   }
 }

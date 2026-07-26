@@ -9,9 +9,18 @@ import CustodyLocationFields from '@/app/components/CustodyLocationFields';
 import type { CustodyLocationType } from '@/lib/custodyLocation';
 import { useAppTheme } from '@/app/contexts/ThemeContext';
 import ThemedPageShell from '@/app/components/ThemedPageShell';
+import { AdminGate } from '@/components/access/AdminGate';
 import { fap } from '@/lib/fixedAssetPageDesign';
 
 export default function NewCustodyPage() {
+  return (
+    <AdminGate>
+      <NewCustodyForm />
+    </AdminGate>
+  );
+}
+
+function NewCustodyForm() {
   const router = useRouter();
   const params = useParams() as { assetnumber: string };
   const { data: session } = useSession();

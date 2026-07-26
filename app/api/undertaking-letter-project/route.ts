@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { jsPDF } from 'jspdf';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,7 +9,7 @@ export async function GET(request: NextRequest) {
     const projectId = searchParams.get('projectId');
     
     if (!projectId) {
-      return NextResponse.json({ error: 'Project ID is required' }, { status: 400 });
+      return apiJson({ error: 'Project ID is required' }, { status: 400 });
     }
 
     // Handle both MongoDB ID and full project identifier
@@ -24,13 +25,13 @@ export async function GET(request: NextRequest) {
       console.log('Detected MongoDB ID, fetching project details...');
       const projectResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/projects`);
       if (!projectResponse.ok) {
-        return NextResponse.json({ error: 'Failed to fetch project data' }, { status: 500 });
+        return apiJson({ error: 'Failed to fetch project data' }, { status: 500 });
       }
       const projects: Array<{ _id: string; wbs: string; projectname: string; status?: string }> = await projectResponse.json();
       const foundProject = projects.find(proj => proj._id === projectIdentifier);
       
       if (!foundProject) {
-        return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+        return apiJson({ error: 'Project not found' }, { status: 404 });
       }
       
       // Create full project identifier
@@ -101,7 +102,7 @@ export async function GET(request: NextRequest) {
       ]).toArray();
     
     if (!equipmentData || equipmentData.length === 0) {
-      return NextResponse.json({ error: 'No equipment found for this project' }, { status: 404 });
+      return apiJson({ error: 'No equipment found for this project' }, { status: 404 });
     }
 
     // Create PDF document
@@ -312,6 +313,6 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Error in undertaking letter project API:', error);
-    return NextResponse.json({ error: 'Failed to process request' }, { status: 500 });
+    return apiJson({ error: 'Failed to process request' }, { status: 500 });
   }
 }

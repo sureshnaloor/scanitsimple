@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import MasterDataPageShell from '@/app/components/MasterDataPageShell';
 import { useThemeSurfaces } from '@/lib/themePageStyles';
 import { fap } from '@/lib/fixedAssetPageDesign';
+import { useAccess } from '@/lib/use-access';
 
 interface Category {
   _id: string;
@@ -25,6 +26,7 @@ export default function FixedAssetSubcategoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const s = useThemeSurfaces();
+  const { isAdmin } = useAccess();
 
   const fetchCategories = async () => {
     const response = await fetch('/api/categories/fixedasset');
@@ -129,6 +131,7 @@ export default function FixedAssetSubcategoryPage() {
 
         {error && <div className={s.errorBox}>{error}</div>}
 
+        {isAdmin && (
         <div className={`${s.card} p-4`}>
           <h2 className={s.sectionTitle}>Add Subcategory</h2>
           <div className="flex flex-wrap gap-3">
@@ -156,6 +159,8 @@ export default function FixedAssetSubcategoryPage() {
             </button>
           </div>
         </div>
+
+                )}
 
         <div className={`${s.card} p-4`}>
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
@@ -233,7 +238,8 @@ export default function FixedAssetSubcategoryPage() {
                         </button>
                       </>
                     ) : (
-                      <>
+                      isAdmin && (
+                        <>
                         <button
                           type="button"
                           onClick={() => setEditingSubcategory(subcategory)}
@@ -249,6 +255,7 @@ export default function FixedAssetSubcategoryPage() {
                           Delete
                         </button>
                       </>
+                      )
                     )}
                   </div>
                 </div>

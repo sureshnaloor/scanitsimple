@@ -3,14 +3,15 @@ import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../auth/[...nextauth]/auth';
+import { apiJson } from '@/lib/api-response';
 
 export async function GET(request: Request) {
   try {
     // Check authentication
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
+      return apiJson(
+        { error: 'Unauthorized: sign in before using this feature' },
         { status: 401 }
       );
     }
@@ -31,10 +32,10 @@ export async function GET(request: Request) {
       .sort({ createdAt: -1 })
       .toArray();
 
-    return NextResponse.json(issues);
+    return apiJson(issues);
   } catch (err) {
     console.error('Failed to fetch material issues:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to fetch material issues' },
       { status: 500 }
     );
@@ -46,8 +47,8 @@ export async function POST(request: Request) {
     // Check authentication
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
+      return apiJson(
+        { error: 'Unauthorized: sign in before using this feature' },
         { status: 401 }
       );
     }
@@ -61,14 +62,14 @@ export async function POST(request: Request) {
     });
     
     if (!material) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'Material not found' },
         { status: 404 }
       );
     }
 
     if (body.issueQuantity > material.quantity) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'Issue quantity exceeds available quantity' },
         { status: 400 }
       );
@@ -107,10 +108,10 @@ export async function POST(request: Request) {
       updateData
     );
 
-    return NextResponse.json({ ...result, issueId: issueData._id }, { status: 201 });
+    return apiJson({ ...result, issueId: issueData._id }, { status: 201 });
   } catch (err) {
     console.error('Failed to create material issue:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to create material issue' },
       { status: 500 }
     );

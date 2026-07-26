@@ -51,7 +51,13 @@ export default function FixedAssetPage() {
         setAsset(assetData);
 
         const custodyResponse = await fetch(`/api/custody/${params?.assetnumber}`);
-        if (!custodyResponse.ok) throw new Error('Failed to fetch custody records');
+        if (!custodyResponse.ok) {
+          throw new Error(
+            custodyResponse.status === 404
+              ? 'No custody records maintained'
+              : 'Failed to fetch custody records'
+          );
+        }
         const custodyData = await custodyResponse.json();
         setCustodyRecords(custodyData);
       } catch (err) {

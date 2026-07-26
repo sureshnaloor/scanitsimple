@@ -5,13 +5,15 @@ import {
   SortingState,
   ColumnFiltersState
 } from '@tanstack/react-table';
-import { ArrowUpDown, Search } from 'lucide-react';
+import { ArrowUpDown, Gauge, Pencil, Search, UserCheck } from 'lucide-react';
 import Link from 'next/link';
 import * as XLSX from 'xlsx';
 
 import { AssetQRCode } from '@/components/AssetQRCode';
 import ResponsiveTanStackTable from '@/components/ui/responsive-tanstack-table';
 import { useAppTheme } from '@/app/contexts/ThemeContext';
+import { useAccess } from '@/lib/use-access';
+import { useAssetMasters, ASSET_STATUSES } from '@/lib/use-asset-masters';
 
 interface Equipment {
   _id: string;
@@ -68,6 +70,81 @@ export default function MMEPage() {
   const [errorModalTitle, setErrorModalTitle] = useState('Bulk Insert Error');
   const [errorModalContent, setErrorModalContent] = useState('');
   const { theme } = useAppTheme();
+
+  // Admin-only row editing of basic (table-column) fields
+  const { isAdmin } = useAccess();
+  const [editAsset, setEditAsset] = useState<Equipment | null>(null);
+  const [editForm, setEditForm] = useState({
+    assetdescription: '',
+    assetcategory: '',
+    assetsubcategory: '',
+    assetstatus: '',
+    assetmanufacturer: '',
+    assetmodel: '',
+    acquiredvalue: '',
+    acquireddate: '',
+  });
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState('');
+
+  // Master-data dropdown options, same as the dynamic detail page
+  const { categories, subcategories, manufacturers } = useAssetMasters(false, editForm.assetcategory);
+
+  const toInputDate = (value: unknown): string => {
+    if (!value) return '';
+    const d = new Date(value as string);
+    return Number.isNaN(d.getTime()) ? '' : d.toISOString().slice(0, 10);
+  };
+
+  const openEdit = (asset: Equipment) => {
+    setEditAsset(asset);
+    setEditForm({
+      assetdescription: asset.assetdescription ?? '',
+      assetcategory: asset.assetcategory ?? '',
+      assetsubcategory: asset.assetsubcategory ?? '',
+      assetstatus: asset.assetstatus ?? '',
+      assetmanufacturer: asset.assetmanufacturer ?? '',
+      assetmodel: asset.assetmodel ?? '',
+      acquiredvalue:
+        typeof asset.acquiredvalue === 'number' ? String(asset.acquiredvalue) : '',
+      acquireddate: toInputDate(asset.acquireddate),
+    });
+    setEditError('');
+  };
+
+  const handleEditSave = async () => {
+    if (!editAsset) return;
+    setEditSaving(true);
+    setEditError('');
+    try {
+      const payload = {
+        assetdescription: editForm.assetdescription,
+        assetcategory: editForm.assetcategory,
+        assetsubcategory: editForm.assetsubcategory,
+        assetstatus: editForm.assetstatus,
+        assetmanufacturer: editForm.assetmanufacturer,
+        assetmodel: editForm.assetmodel,
+        acquiredvalue: editForm.acquiredvalue === '' ? null : Number(editForm.acquiredvalue),
+        acquireddate: editForm.acquireddate || null,
+      };
+      const res = await fetch(`/api/assets/${editAsset.assetnumber}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const updated = await res.json();
+      if (!res.ok) throw new Error(updated.error || 'Failed to update asset');
+      const patchRows = (rows: Equipment[]) =>
+        rows.map((r) => (r._id === editAsset._id ? { ...r, ...updated } : r));
+      setData(patchRows);
+      setRecentAcquisitions(patchRows);
+      setEditAsset(null);
+    } catch (err: any) {
+      setEditError(err.message || 'Failed to update asset');
+    } finally {
+      setEditSaving(false);
+    }
+  };
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Array<{
     x: number;
@@ -493,9 +570,51 @@ export default function MMEPage() {
   const backgroundStyles = getBackgroundStyles();
 
   const formatCurrency = (value: unknown) =>
-    typeof value === 'number'
+    value === '***'
+      ? '***'
+      : typeof value === 'number'
       ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'SAR' }).format(value)
       : 'N/A';
+
+  const actionsColumn: ColumnDef<Equipment> = {
+    id: 'actions',
+    header: () => <span className={backgroundStyles.textColor}>Actions</span>,
+    cell: ({ row }) => (
+      <div className="flex items-center gap-3">
+        <Link
+          href={`/asset/${row.original.assetnumber}#custody`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`${backgroundStyles.linkColor} transition-colors`}
+          title="Custody"
+          aria-label="Custody"
+        >
+          <UserCheck className="h-4 w-4" />
+        </Link>
+        <Link
+          href={`/asset/${row.original.assetnumber}#calibration`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`${backgroundStyles.linkColor} transition-colors`}
+          title="Calibration"
+          aria-label="Calibration"
+        >
+          <Gauge className="h-4 w-4" />
+        </Link>
+        {isAdmin && (
+          <button
+            type="button"
+            onClick={() => openEdit(row.original)}
+            className={`${backgroundStyles.linkColor} transition-colors`}
+            title="Edit basic details"
+            aria-label="Edit basic details"
+          >
+            <Pencil className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+    ),
+  };
 
   const buildAssetColumns = (options?: { includeActions?: boolean }): ColumnDef<Equipment>[] => [
     {
@@ -558,6 +677,7 @@ export default function MMEPage() {
       ),
       cell: ({ row }) => {
         const value = row.getValue('acquiredvalue');
+        if ((value as unknown) === '***') return '***';
         return formatCurrency(value);
       }
     },
@@ -578,32 +698,7 @@ export default function MMEPage() {
       }
     },
     ...(options?.includeActions
-      ? [
-          {
-            id: 'actions',
-            header: () => <span className={backgroundStyles.textColor}>Actions</span>,
-            cell: ({ row }: { row: { original: Equipment } }) => (
-              <div className="flex flex-wrap gap-2 text-[12px]">
-                <Link
-                  href={`/asset/${row.original.assetnumber}#custody`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`${backgroundStyles.linkColor} font-medium transition-colors`}
-                >
-                  Custody
-                </Link>
-                <Link
-                  href={`/asset/${row.original.assetnumber}#calibration`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`${backgroundStyles.linkColor} font-medium transition-colors`}
-                >
-                  Calibration
-                </Link>
-              </div>
-            ),
-          } as ColumnDef<Equipment>,
-        ]
+      ? [actionsColumn]
       : [
           {
             id: 'qrcode',
@@ -612,6 +707,7 @@ export default function MMEPage() {
               <AssetQRCode assetNumber={row.original.assetnumber} assetType="mme" />
             ),
           } as ColumnDef<Equipment>,
+          actionsColumn,
         ]),
   ];
 
@@ -780,6 +876,151 @@ export default function MMEPage() {
             </div>
           )}
         </div>
+
+        {editAsset && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className={`${backgroundStyles.searchBg} w-full max-w-2xl rounded-2xl p-6 shadow-xl`}>
+              <h3 className={`mb-1 text-2xl font-semibold ${backgroundStyles.textColor}`}>
+                Edit basic details
+              </h3>
+              <p className={`mb-4 font-mono text-sm ${backgroundStyles.linkColor}`}>
+                {editAsset.assetnumber}
+              </p>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <label className="md:col-span-2">
+                  <span className={`mb-1 block text-xs ${backgroundStyles.headerSubtitle}`}>Description</span>
+                  <input
+                    type="text"
+                    value={editForm.assetdescription}
+                    onChange={(e) => setEditForm((f) => ({ ...f, assetdescription: e.target.value }))}
+                    className={`w-full rounded-xl px-3 py-2 text-sm ${backgroundStyles.inputBg}`}
+                  />
+                </label>
+                <label>
+                  <span className={`mb-1 block text-xs ${backgroundStyles.headerSubtitle}`}>Category</span>
+                  <select
+                    value={editForm.assetcategory || 'Select Category'}
+                    onChange={(e) => {
+                      const next = e.target.value === 'Select Category' ? '' : e.target.value;
+                      setEditForm((f) => ({ ...f, assetcategory: next, assetsubcategory: '' }));
+                    }}
+                    className={`w-full rounded-xl px-3 py-2 text-sm ${backgroundStyles.inputBg}`}
+                  >
+                    <option value="Select Category">Select Category</option>
+                    {categories.map((c) => (
+                      <option key={c._id} value={c.name}>{c.name}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  <span className={`mb-1 block text-xs ${backgroundStyles.headerSubtitle}`}>Subcategory</span>
+                  <select
+                    value={editForm.assetsubcategory || 'Select Subcategory'}
+                    onChange={(e) =>
+                      setEditForm((f) => ({
+                        ...f,
+                        assetsubcategory: e.target.value === 'Select Subcategory' ? '' : e.target.value,
+                      }))
+                    }
+                    disabled={!editForm.assetcategory}
+                    className={`w-full rounded-xl px-3 py-2 text-sm ${backgroundStyles.inputBg}`}
+                  >
+                    <option value="Select Subcategory">Select Subcategory</option>
+                    {subcategories.map((s) => (
+                      <option key={s._id} value={s.name}>{s.name}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  <span className={`mb-1 block text-xs ${backgroundStyles.headerSubtitle}`}>Status</span>
+                  <select
+                    value={editForm.assetstatus || 'Select Status'}
+                    onChange={(e) =>
+                      setEditForm((f) => ({
+                        ...f,
+                        assetstatus: e.target.value === 'Select Status' ? '' : e.target.value,
+                      }))
+                    }
+                    className={`w-full rounded-xl px-3 py-2 text-sm ${backgroundStyles.inputBg}`}
+                  >
+                    {ASSET_STATUSES.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  <span className={`mb-1 block text-xs ${backgroundStyles.headerSubtitle}`}>Manufacturer</span>
+                  <select
+                    value={editForm.assetmanufacturer || 'Select Manufacturer'}
+                    onChange={(e) =>
+                      setEditForm((f) => ({
+                        ...f,
+                        assetmanufacturer: e.target.value === 'Select Manufacturer' ? '' : e.target.value,
+                      }))
+                    }
+                    className={`w-full rounded-xl px-3 py-2 text-sm ${backgroundStyles.inputBg}`}
+                  >
+                    <option value="Select Manufacturer">Select Manufacturer</option>
+                    {manufacturers.map((m) => (
+                      <option key={m._id} value={m.name}>{m.name}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  <span className={`mb-1 block text-xs ${backgroundStyles.headerSubtitle}`}>Model</span>
+                  <input
+                    type="text"
+                    value={editForm.assetmodel}
+                    onChange={(e) => setEditForm((f) => ({ ...f, assetmodel: e.target.value }))}
+                    className={`w-full rounded-xl px-3 py-2 text-sm ${backgroundStyles.inputBg}`}
+                  />
+                </label>
+                <label>
+                  <span className={`mb-1 block text-xs ${backgroundStyles.headerSubtitle}`}>Value (SAR)</span>
+                  <input
+                    type="number"
+                    value={editForm.acquiredvalue}
+                    onChange={(e) => setEditForm((f) => ({ ...f, acquiredvalue: e.target.value }))}
+                    className={`w-full rounded-xl px-3 py-2 text-sm ${backgroundStyles.inputBg}`}
+                  />
+                </label>
+                <label>
+                  <span className={`mb-1 block text-xs ${backgroundStyles.headerSubtitle}`}>Acquiring date</span>
+                  <input
+                    type="date"
+                    value={editForm.acquireddate}
+                    onChange={(e) => setEditForm((f) => ({ ...f, acquireddate: e.target.value }))}
+                    className={`w-full rounded-xl px-3 py-2 text-sm ${backgroundStyles.inputBg}`}
+                  />
+                </label>
+              </div>
+
+              {editError && (
+                <p className="mt-4 text-sm font-medium text-red-500">{editError}</p>
+              )}
+
+              <div className="mt-6 flex flex-wrap justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditAsset(null)}
+                  disabled={editSaving}
+                  className={`px-4 py-2 rounded-xl border transition-all ${backgroundStyles.inputBg} disabled:opacity-50`}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleEditSave}
+                  disabled={editSaving}
+                  className={`px-4 py-2 rounded-xl border transition-all ${backgroundStyles.inputBg} disabled:opacity-50`}
+                >
+                  {editSaving ? 'Saving...' : 'Save changes'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {showBulkInsertModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">

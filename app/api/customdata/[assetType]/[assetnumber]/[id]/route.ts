@@ -3,6 +3,7 @@ import { ObjectId } from 'mongodb';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 const COLLECTION = 'customdata';
 const ASSET_TYPES = new Set(['portable', 'software', 'transport', 'facility', 'mme', 'fixedasset']);
@@ -14,16 +15,16 @@ export async function PUT(
 ) {
   try {
     if (!ASSET_TYPES.has(params.assetType)) {
-      return NextResponse.json({ error: 'Invalid asset type' }, { status: 400 });
+      return apiJson({ error: 'Invalid asset type' }, { status: 400 });
     }
 
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return apiJson({ error: 'Unauthorized: sign in before using this feature' }, { status: 401 });
     }
 
     if (!ObjectId.isValid(params.id)) {
-      return NextResponse.json({ error: 'Invalid id' }, { status: 400 });
+      return apiJson({ error: 'Invalid id' }, { status: 400 });
     }
 
     const body = await request.json();
@@ -31,10 +32,10 @@ export async function PUT(
     const fieldType = String(body?.fieldType ?? '').trim();
 
     if (!label) {
-      return NextResponse.json({ error: 'Label is required' }, { status: 400 });
+      return apiJson({ error: 'Label is required' }, { status: 400 });
     }
     if (!FIELD_TYPES.has(fieldType)) {
-      return NextResponse.json({ error: 'Invalid field type' }, { status: 400 });
+      return apiJson({ error: 'Invalid field type' }, { status: 400 });
     }
 
     const updateDoc: Record<string, unknown> = {
@@ -55,7 +56,7 @@ export async function PUT(
       } else {
         const n = Number(body.valueNumber);
         if (Number.isNaN(n)) {
-          return NextResponse.json({ error: 'Number value must be valid' }, { status: 400 });
+          return apiJson({ error: 'Number value must be valid' }, { status: 400 });
         }
         updateDoc.valueNumber = n;
       }
@@ -67,7 +68,7 @@ export async function PUT(
       } else {
         const d = new Date(String(body.valueDate));
         if (Number.isNaN(d.getTime())) {
-          return NextResponse.json({ error: 'Date value must be valid' }, { status: 400 });
+          return apiJson({ error: 'Date value must be valid' }, { status: 400 });
         }
         updateDoc.valueDate = d;
       }
@@ -87,13 +88,13 @@ export async function PUT(
     );
 
     if (!result) {
-      return NextResponse.json({ error: 'Custom detail not found' }, { status: 404 });
+      return apiJson({ error: 'Custom detail not found' }, { status: 404 });
     }
 
-    return NextResponse.json(result);
+    return apiJson(result);
   } catch (error) {
     console.error('Failed to update custom data:', error);
-    return NextResponse.json({ error: 'Failed to update custom data' }, { status: 500 });
+    return apiJson({ error: 'Failed to update custom data' }, { status: 500 });
   }
 }
 
@@ -103,16 +104,16 @@ export async function DELETE(
 ) {
   try {
     if (!ASSET_TYPES.has(params.assetType)) {
-      return NextResponse.json({ error: 'Invalid asset type' }, { status: 400 });
+      return apiJson({ error: 'Invalid asset type' }, { status: 400 });
     }
 
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return apiJson({ error: 'Unauthorized: sign in before using this feature' }, { status: 401 });
     }
 
     if (!ObjectId.isValid(params.id)) {
-      return NextResponse.json({ error: 'Invalid id' }, { status: 400 });
+      return apiJson({ error: 'Invalid id' }, { status: 400 });
     }
 
     const { db } = await connectToDatabase();
@@ -123,12 +124,12 @@ export async function DELETE(
     });
 
     if (result.deletedCount === 0) {
-      return NextResponse.json({ error: 'Custom detail not found' }, { status: 404 });
+      return apiJson({ error: 'Custom detail not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true });
+    return apiJson({ success: true });
   } catch (error) {
     console.error('Failed to delete custom data:', error);
-    return NextResponse.json({ error: 'Failed to delete custom data' }, { status: 500 });
+    return apiJson({ error: 'Failed to delete custom data' }, { status: 500 });
   }
 }

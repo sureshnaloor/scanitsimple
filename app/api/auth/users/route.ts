@@ -10,7 +10,7 @@ export async function GET() {
     
     if (!session) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Unauthorized: sign in before using this feature' },
         { status: 401 }
       );
     }

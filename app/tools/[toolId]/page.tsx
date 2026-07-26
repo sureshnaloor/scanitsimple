@@ -132,7 +132,11 @@ export default function ToolDetailPage() {
 
       // Refresh the custody records
       const refreshResponse = await fetch(`/api/tools-custody?assetNumber=${toolId}`);
-      if (!refreshResponse.ok) throw new Error('Failed to fetch custody records');
+      if (!refreshResponse.ok) {
+        throw new Error(
+          refreshResponse.status === 404 ? 'No custody records maintained' : 'Failed to fetch custody records'
+        );
+      }
       const updatedRecords = await refreshResponse.json();
       
       setCustodyRecords(updatedRecords);

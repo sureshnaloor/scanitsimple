@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
+import { apiJson } from '@/lib/api-response';
 
 export async function GET() {
   try {
@@ -62,7 +63,7 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Error generating MME template:', error);
-    return NextResponse.json(
+    return apiJson(
       { success: false, error: 'Failed to generate MME template' },
       { status: 500 }
     );

@@ -2,9 +2,12 @@
 
 import Link from 'next/link';
 import { Zap, Palette, GitBranch } from 'lucide-react';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { useRef } from 'react';
 import { SectionHeader } from '../section-header';
 import { QrDemo } from '../qr-demo';
 import { FadeUp } from '../fade-up';
+import { MagneticButton } from '@/app/components/effects/magnetic-button';
 import { Button } from '@/components/ui/button';
 
 const icons = { Zap, Palette, GitBranch };
@@ -16,8 +19,20 @@ const features = [
 ];
 
 export function QrSection() {
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ['start end', 'end start'],
+  });
+
+  const rotateY = useTransform(scrollYProgress, [0, 1], [-15, 15]);
+
   return (
-    <section id="demo" className="bg-gradient-to-b from-primary-dark to-primary-navy py-24">
+    <section
+      id="demo"
+      ref={sectionRef}
+      className="relative overflow-hidden bg-gradient-to-b from-primary-dark to-primary-navy py-24"
+    >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 items-center gap-16 lg:grid-cols-2">
           <FadeUp>
@@ -29,24 +44,45 @@ export function QrSection() {
               className="mb-8 !text-left !mx-0"
             />
             <ul className="mb-8 space-y-4">
-              {features.map(({ icon, text }) => {
+              {features.map(({ icon, text }, i) => {
                 const Icon = icons[icon as keyof typeof icons];
                 return (
-                  <li key={text} className="flex items-center gap-3 text-body-ds">
-                    <div className="flex size-10 items-center justify-center rounded-full bg-accent-teal/15">
+                  <motion.li
+                    key={text}
+                    className="flex items-center gap-3 text-body-ds"
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.1 * i, duration: 0.5 }}
+                  >
+                    <motion.div
+                      className="flex size-10 items-center justify-center rounded-full bg-accent-teal/15"
+                      whileHover={{ scale: 1.1, backgroundColor: 'rgba(0,180,216,0.25)' }}
+                    >
                       <Icon className="size-5 text-accent-teal" />
-                    </div>
+                    </motion.div>
                     {text}
-                  </li>
+                  </motion.li>
                 );
               })}
             </ul>
-            <Button variant="cta-secondary" asChild>
-              <Link href="/dashboard">Try QR Generator</Link>
-            </Button>
+            <MagneticButton>
+              <Button variant="cta-secondary" asChild>
+                <Link href="/dashboard">Try QR Generator</Link>
+              </Button>
+            </MagneticButton>
           </FadeUp>
+
           <FadeUp delay={0.2}>
-            <QrDemo />
+            <motion.div
+              style={{ rotateY, perspective: 800 }}
+              className="relative"
+            >
+              <div className="relative overflow-hidden rounded-2xl">
+                <QrDemo />
+                <div className="scan-line pointer-events-none" />
+              </div>
+            </motion.div>
           </FadeUp>
         </div>
       </div>

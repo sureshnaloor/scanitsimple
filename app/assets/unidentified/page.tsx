@@ -6,10 +6,12 @@ import {
   ColumnFiltersState
 } from '@tanstack/react-table';
 import { ArrowUpDown, Plus, Edit, Trash2 } from 'lucide-react';
+import { useAccess } from '@/lib/use-access';
 import ResponsiveTanStackTable from '@/components/ui/responsive-tanstack-table';
 import { UnidentifiedItem } from '@/types/asset';
 
 export default function UnidentifiedAssetsPage() {
+  const { isAdmin } = useAccess();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Array<{
     x: number;
@@ -239,6 +241,7 @@ export default function UnidentifiedAssetsPage() {
       ),
       cell: ({ row }) => {
         const value = row.getValue('assetvalue') as number;
+        if ((value as unknown) === '***') return '***';
         return value ? new Intl.NumberFormat('en-US', {
           style: 'currency',
           currency: 'SAR'
@@ -266,20 +269,24 @@ export default function UnidentifiedAssetsPage() {
       header: 'Actions',
       cell: ({ row }) => (
         <div className="flex gap-2">
-          <button
-            onClick={() => setEditingItem(row.original)}
-            className="p-1 text-teal-400 hover:text-teal-300 transition-colors"
-            title="Edit"
-          >
-            <Edit className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => setDeleteItem(row.original)}
-            className="p-1 text-red-400 hover:text-red-300 transition-colors"
-            title="Delete"
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
+          {isAdmin && (
+            <>
+              <button
+                onClick={() => setEditingItem(row.original)}
+                className="p-1 text-teal-400 hover:text-teal-300 transition-colors"
+                title="Edit"
+              >
+                <Edit className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setDeleteItem(row.original)}
+                className="p-1 text-red-400 hover:text-red-300 transition-colors"
+                title="Delete"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </>
+          )}
         </div>
       ),
     },
@@ -301,13 +308,15 @@ export default function UnidentifiedAssetsPage() {
               </h1>
               <p className="text-white/80 text-lg">Manage unidentified assets</p>
             </div>
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-2 px-6 py-3 bg-teal-500 hover:bg-teal-600 text-white rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
-            >
-              <Plus className="h-5 w-5" />
-              Add New
-            </button>
+            {isAdmin && (
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="flex items-center gap-2 px-6 py-3 bg-teal-500 hover:bg-teal-600 text-white rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
+              >
+                <Plus className="h-5 w-5" />
+                Add New
+              </button>
+            )}
           </div>
         </div>
 

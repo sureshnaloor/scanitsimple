@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 export async function GET(request: Request) {
   try {
@@ -9,7 +10,7 @@ export async function GET(request: Request) {
 
     // Return empty array if both parameters are empty or null
     if (!assetNumber?.trim() && !assetName?.trim()) {
-      return NextResponse.json([]);
+      return apiJson([]);
     }
 
     const { db } = await connectToDatabase();
@@ -28,10 +29,10 @@ export async function GET(request: Request) {
       .find(query)
       .toArray();
 
-    return NextResponse.json(fixedAssets);
+    return apiJson(fixedAssets);
   } catch (error) {
     console.error('Failed to fetch fixed assets:', error);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to fetch fixed assets' },
       { status: 500 }
     );

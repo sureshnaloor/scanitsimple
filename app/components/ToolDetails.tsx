@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { PencilIcon, XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { ToolData } from '@/types/tools';
+import { AdminOnly } from '@/components/access/AccessControls';
 
 interface ToolDetailsProps {
   tool: ToolData;
@@ -132,13 +133,15 @@ export default function ToolDetails({ tool, onUpdate }: ToolDetailsProps) {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold text-white">Tool Information</h2>
         {!isEditing ? (
-          <button
-            onClick={() => setIsEditing(true)}
-            className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
-          >
-            <PencilIcon className="h-4 w-4" />
-            Edit
-          </button>
+          <AdminOnly>
+            <button
+              onClick={() => setIsEditing(true)}
+              className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+            >
+              <PencilIcon className="h-4 w-4" />
+              Edit
+            </button>
+          </AdminOnly>
         ) : (
           <div className="flex gap-2">
             <button

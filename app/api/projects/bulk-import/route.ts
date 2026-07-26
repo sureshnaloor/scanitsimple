@@ -4,6 +4,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth';
 import { ensureLocationCitySeeds } from '@/lib/locationCitySeeds';
 import type { Db } from 'mongodb';
+import { apiJson } from '@/lib/api-response';
 
 type BulkProjectRow = {
   wbs: string;
@@ -244,7 +245,7 @@ export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      return apiJson({ success: false, error: 'Unauthorized: sign in before using this feature' }, { status: 401 });
     }
 
     const body = await request.json();
@@ -252,14 +253,14 @@ export async function POST(request: Request) {
     const rows = Array.isArray(body?.rows) ? body.rows : [];
 
     if (!['validate', 'insert'].includes(action)) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'Invalid action. Use "validate" or "insert".' },
         { status: 400 }
       );
     }
 
     if (!rows.length) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'No rows received for processing.' },
         { status: 400 }
       );
@@ -269,7 +270,7 @@ export async function POST(request: Request) {
     const result = await validateAndNormalizeRows(db, rows as BulkProjectRow[]);
 
     if ((result.errors ?? []).length > 0) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'Validation failed.', errors: result.errors },
         { status: 400 }
       );
@@ -280,7 +281,7 @@ export async function POST(request: Request) {
     const candidates = result.normalized;
 
     if (action === 'validate') {
-      return NextResponse.json({
+      return apiJson({
         success: true,
         data: {
           totalUploaded: rows.length,
@@ -299,7 +300,7 @@ export async function POST(request: Request) {
     }
 
     if (!insertDocs.length) {
-      return NextResponse.json(
+      return apiJson(
         {
           success: false,
           error: 'No new projects to insert. All uploaded WBS codes already exist.',
@@ -316,7 +317,7 @@ export async function POST(request: Request) {
 
     const ins = await db.collection('projects').insertMany(insertDocs);
 
-    return NextResponse.json({
+    return apiJson({
       success: true,
       data: {
         insertedCount: ins.insertedCount,
@@ -331,7 +332,7 @@ export async function POST(request: Request) {
   } catch (error: unknown) {
     console.error('Error in projects bulk import:', error);
     const message = error instanceof Error ? error.message : String(error);
-    return NextResponse.json(
+    return apiJson(
       { success: false, error: 'Failed to process projects bulk import.', details: message },
       { status: 500 }
     );

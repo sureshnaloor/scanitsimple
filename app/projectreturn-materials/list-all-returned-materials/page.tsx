@@ -57,10 +57,13 @@ export default function ListAllReturnedMaterialsPage() {
       // Calculate current unit rate for each material
       const materialsWithCurrentRate: MaterialWithCurrentRate[] = materials.map(material => ({
         ...material,
-        currentUnitRate: calculateCurrentUnitRate(
-          material.sourceUnitRate || 0,
-          material.receivedInWarehouseDate
-        )
+        // Guest-masked rates stay masked in derived figures
+        currentUnitRate: (material.sourceUnitRate as unknown) === '***'
+          ? ('***' as any)
+          : calculateCurrentUnitRate(
+              material.sourceUnitRate || 0,
+              material.receivedInWarehouseDate
+            )
       }));
 
       // Sort by material code ascending
@@ -142,6 +145,7 @@ export default function ListAllReturnedMaterialsPage() {
       header: 'Source Unit Rate',
       cell: ({ row }) => {
         const rate = row.getValue('sourceUnitRate') as number;
+        if ((rate as unknown) === '***') return '***';
         return (
           <div className="text-gray-900 dark:text-white font-medium">
             {new Intl.NumberFormat('en-US', {
@@ -157,6 +161,7 @@ export default function ListAllReturnedMaterialsPage() {
       header: 'Current Unit Rate',
       cell: ({ row }) => {
         const rate = row.getValue('currentUnitRate') as number;
+        if ((rate as unknown) === '***') return '***';
         return (
           <div className="text-green-700 dark:text-green-400 font-semibold">
             {new Intl.NumberFormat('en-US', {

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { ObjectId } from 'mongodb';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 const RECORDS = 'transport_maint_record_preventive';
 const MASTER = 'transport_maint_master_preventive';
@@ -12,7 +13,7 @@ export async function PUT(
   try {
     const { assetnumber, recordId } = params;
     if (!ObjectId.isValid(recordId)) {
-      return NextResponse.json({ error: 'Invalid record id.' }, { status: 400 });
+      return apiJson({ error: 'Invalid record id.' }, { status: 400 });
     }
 
     const body = await request.json();
@@ -22,7 +23,7 @@ export async function PUT(
 
     const existing = await col.findOne({ _id: oid, assetnumber });
     if (!existing) {
-      return NextResponse.json({ error: 'Record not found.' }, { status: 404 });
+      return apiJson({ error: 'Record not found.' }, { status: 404 });
     }
 
     const $set: Record<string, unknown> = {};
@@ -48,26 +49,26 @@ export async function PUT(
     if (body?.maintenanceTypeId !== undefined) {
       const tid = String(body.maintenanceTypeId ?? '').trim();
       if (!tid || !ObjectId.isValid(tid)) {
-        return NextResponse.json({ error: 'Valid maintenance type is required.' }, { status: 400 });
+        return apiJson({ error: 'Valid maintenance type is required.' }, { status: 400 });
       }
       const master = await db.collection(MASTER).findOne({ _id: new ObjectId(tid) });
       if (!master) {
-        return NextResponse.json({ error: 'Maintenance type not found.' }, { status: 400 });
+        return apiJson({ error: 'Maintenance type not found.' }, { status: 400 });
       }
       $set.maintenanceTypeId = new ObjectId(tid);
       $set.maintenanceTypeName = String((master as { name?: string }).name ?? '');
     }
 
     if (Object.keys($set).length === 0) {
-      return NextResponse.json(existing);
+      return apiJson(existing);
     }
 
     await col.updateOne({ _id: oid, assetnumber }, { $set });
     const updated = await col.findOne({ _id: oid });
-    return NextResponse.json(updated);
+    return apiJson(updated);
   } catch (error) {
     console.error('PUT preventive maintenance record:', error);
-    return NextResponse.json({ error: 'Failed to update record' }, { status: 500 });
+    return apiJson({ error: 'Failed to update record' }, { status: 500 });
   }
 }
 
@@ -78,7 +79,7 @@ export async function DELETE(
   try {
     const { assetnumber, recordId } = params;
     if (!ObjectId.isValid(recordId)) {
-      return NextResponse.json({ error: 'Invalid record id.' }, { status: 400 });
+      return apiJson({ error: 'Invalid record id.' }, { status: 400 });
     }
 
     const { db } = await connectToDatabase();
@@ -87,11 +88,11 @@ export async function DELETE(
       .deleteOne({ _id: new ObjectId(recordId), assetnumber });
 
     if (result.deletedCount === 0) {
-      return NextResponse.json({ error: 'Record not found.' }, { status: 404 });
+      return apiJson({ error: 'Record not found.' }, { status: 404 });
     }
-    return NextResponse.json({ success: true });
+    return apiJson({ success: true });
   } catch (error) {
     console.error('DELETE preventive maintenance record:', error);
-    return NextResponse.json({ error: 'Failed to delete record' }, { status: 500 });
+    return apiJson({ error: 'Failed to delete record' }, { status: 500 });
   }
 }

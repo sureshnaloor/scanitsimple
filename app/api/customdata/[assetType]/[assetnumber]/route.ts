@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 const COLLECTION = 'customdata';
 const ASSET_TYPES = new Set(['portable', 'software', 'transport', 'facility', 'mme', 'fixedasset']);
@@ -17,7 +18,7 @@ export async function GET(
 ) {
   try {
     if (!isValidAssetType(params.assetType)) {
-      return NextResponse.json({ error: 'Invalid asset type' }, { status: 400 });
+      return apiJson({ error: 'Invalid asset type' }, { status: 400 });
     }
 
     const { db } = await connectToDatabase();
@@ -27,10 +28,10 @@ export async function GET(
       .sort({ createdat: -1 })
       .toArray();
 
-    return NextResponse.json(docs);
+    return apiJson(docs);
   } catch (error) {
     console.error('Failed to fetch custom data:', error);
-    return NextResponse.json({ error: 'Failed to fetch custom data' }, { status: 500 });
+    return apiJson({ error: 'Failed to fetch custom data' }, { status: 500 });
   }
 }
 
@@ -40,12 +41,12 @@ export async function POST(
 ) {
   try {
     if (!isValidAssetType(params.assetType)) {
-      return NextResponse.json({ error: 'Invalid asset type' }, { status: 400 });
+      return apiJson({ error: 'Invalid asset type' }, { status: 400 });
     }
 
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return apiJson({ error: 'Unauthorized: sign in before using this feature' }, { status: 401 });
     }
 
     const body = await request.json();
@@ -53,10 +54,10 @@ export async function POST(
     const fieldType = String(body?.fieldType ?? '').trim();
 
     if (!label) {
-      return NextResponse.json({ error: 'Label is required' }, { status: 400 });
+      return apiJson({ error: 'Label is required' }, { status: 400 });
     }
     if (!FIELD_TYPES.has(fieldType)) {
-      return NextResponse.json({ error: 'Invalid field type' }, { status: 400 });
+      return apiJson({ error: 'Invalid field type' }, { status: 400 });
     }
 
     const doc: Record<string, unknown> = {
@@ -78,7 +79,7 @@ export async function POST(
       } else {
         const n = Number(body.valueNumber);
         if (Number.isNaN(n)) {
-          return NextResponse.json({ error: 'Number value must be valid' }, { status: 400 });
+          return apiJson({ error: 'Number value must be valid' }, { status: 400 });
         }
         doc.valueNumber = n;
       }
@@ -90,7 +91,7 @@ export async function POST(
       } else {
         const d = new Date(String(body.valueDate));
         if (Number.isNaN(d.getTime())) {
-          return NextResponse.json({ error: 'Date value must be valid' }, { status: 400 });
+          return apiJson({ error: 'Date value must be valid' }, { status: 400 });
         }
         doc.valueDate = d;
       }
@@ -101,9 +102,9 @@ export async function POST(
     const { db } = await connectToDatabase();
     const result = await db.collection(COLLECTION).insertOne(doc);
     const created = await db.collection(COLLECTION).findOne({ _id: result.insertedId });
-    return NextResponse.json(created, { status: 201 });
+    return apiJson(created, { status: 201 });
   } catch (error) {
     console.error('Failed to create custom data:', error);
-    return NextResponse.json({ error: 'Failed to create custom data' }, { status: 500 });
+    return apiJson({ error: 'Failed to create custom data' }, { status: 500 });
   }
 }

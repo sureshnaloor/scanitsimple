@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 export async function GET(
   request: Request,
@@ -12,16 +13,16 @@ export async function GET(
       .findOne({ assetnumber: params.assetnumber });
 
     if (!asset) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'Asset not found' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(asset);
+    return apiJson(asset);
   } catch (err) {
     console.error('Failed to fetch asset:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to fetch asset' },
       { status: 500 }
     );
@@ -45,21 +46,29 @@ export async function PUT(
 
     if (!existingAsset) {
       console.error('Asset not found in database:', assetnumber);
-      return NextResponse.json(
+      return apiJson(
         { error: `Asset ${assetnumber} not found` },
         { status: 404 }
       );
     }
 
-    // Remove immutable and protected fields
+    // Remove immutable and protected fields (assetnumber/_id can never change;
+    // everything else is editable by admins via the row-edit dialog)
     const {
       _id,
       assetnumber: _an,
-      acquireddate,
-      acquiredvalue,
-      assetdescription,
       ...updateFields
     } = updateData;
+
+    // Coerce basic numeric/date fields when present
+    if (Object.prototype.hasOwnProperty.call(updateFields, 'acquiredvalue')) {
+      const num = Number(updateFields.acquiredvalue);
+      updateFields.acquiredvalue = Number.isNaN(num) ? null : num;
+    }
+    if (Object.prototype.hasOwnProperty.call(updateFields, 'acquireddate')) {
+      const d = new Date(updateFields.acquireddate);
+      updateFields.acquireddate = Number.isNaN(d.getTime()) ? null : d;
+    }
 
     console.log('Updating asset with fields:', updateFields);
 
@@ -73,18 +82,18 @@ export async function PUT(
 
     if (!updatedAsset) {
       console.error('Update failed for asset:', assetnumber);
-      return NextResponse.json(
+      return apiJson(
         { error: 'Failed to update asset' },
         { status: 500 }
       );
     }
 
     console.log('Asset updated successfully:', updatedAsset);
-    return NextResponse.json(updatedAsset);
+    return apiJson(updatedAsset);
 
   } catch (error) {
     console.error('Error in asset update:', error);
-    return NextResponse.json(
+    return apiJson(
       { 
         error: 'Failed to update asset',
         details: error instanceof Error ? error.message : 'Unknown error'
@@ -105,16 +114,16 @@ export async function DELETE(
     });
 
     if (result.deletedCount === 0) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'Asset not found' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(result);
+    return apiJson(result);
   } catch (err) {
     console.error('Failed to delete asset:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to delete asset' },
       { status: 500 }
     );

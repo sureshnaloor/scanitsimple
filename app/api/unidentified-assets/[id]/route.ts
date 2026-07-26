@@ -3,6 +3,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../auth/[...nextauth]/auth';
 import { ObjectId } from 'mongodb';
+import { apiJson } from '@/lib/api-response';
 
 // GET - Fetch single unidentified Asset by ID
 export async function GET(
@@ -12,8 +13,8 @@ export async function GET(
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
+      return apiJson(
+        { error: 'Unauthorized: sign in before using this feature' },
         { status: 401 }
       );
     }
@@ -24,16 +25,16 @@ export async function GET(
       .findOne({ _id: new ObjectId(params.id) });
 
     if (!item) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'Unidentified Asset not found' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(item);
+    return apiJson(item);
   } catch (err) {
     console.error('Failed to fetch unidentified Asset:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to fetch unidentified Asset' },
       { status: 500 }
     );
@@ -48,8 +49,8 @@ export async function PUT(
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
+      return apiJson(
+        { error: 'Unauthorized: sign in before using this feature' },
         { status: 401 }
       );
     }
@@ -59,7 +60,7 @@ export async function PUT(
 
     // Validate mandatory fields if they're being updated
     if (updateData.assetdescription === '' || updateData.assetmodel === '' || updateData.assetmanufacturer === '' || updateData.assetserialnumber === '') {
-      return NextResponse.json(
+      return apiJson(
         { error: 'Asset Description, Model, Manufacturer, and Serial Number are required' },
         { status: 400 }
       );
@@ -71,7 +72,7 @@ export async function PUT(
       .findOne({ _id: new ObjectId(params.id) });
 
     if (!existingItem) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'Unidentified Asset not found' },
         { status: 404 }
       );
@@ -96,16 +97,16 @@ export async function PUT(
       );
 
     if (!result) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'Failed to update unidentified Asset' },
         { status: 500 }
       );
     }
 
-    return NextResponse.json(result);
+    return apiJson(result);
   } catch (err) {
     console.error('Failed to update unidentified Asset:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to update unidentified Asset' },
       { status: 500 }
     );
@@ -120,8 +121,8 @@ export async function DELETE(
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
+      return apiJson(
+        { error: 'Unauthorized: sign in before using this feature' },
         { status: 401 }
       );
     }
@@ -132,16 +133,16 @@ export async function DELETE(
       .deleteOne({ _id: new ObjectId(params.id) });
 
     if (result.deletedCount === 0) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'Unidentified Asset not found' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({ success: true });
+    return apiJson({ success: true });
   } catch (err) {
     console.error('Failed to delete unidentified Asset:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to delete unidentified Asset' },
       { status: 500 }
     );

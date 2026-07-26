@@ -3,6 +3,7 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { connectToDatabase } from "@/lib/mongodb";
 import { compare } from "bcrypt";
+import { isAdminEmail } from "@/lib/admin-users";
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
@@ -49,12 +50,16 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.role = user.role;
+        token.email = user.email ?? token.email;
       }
+      // Re-evaluated on every token use so ADMIN_USERS env changes take effect
+      token.isAdmin = isAdminEmail(user?.email ?? token.email);
       return token;
     },
     async session({ session, token }) {
       if (session?.user) {
         (session.user as any).role = token.role;
+        (session.user as any).isAdmin = token.isAdmin === true;
       }
       return session;
     }

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 export async function GET(
   request: Request,
@@ -12,16 +13,16 @@ export async function GET(
       .findOne({ assetnumber: params.toolId });
 
     if (!custodyRecord) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'Tool custody record not found' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(custodyRecord);
+    return apiJson(custodyRecord);
   } catch (error) {
     console.error('Failed to fetch tool custody record:', error);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to fetch tool custody record' },
       { status: 500 }
     );
@@ -42,7 +43,7 @@ export async function PUT(
     const existingRecord = await db.collection('tools-custody').findOne({ assetnumber: toolId });
 
     if (!existingRecord) {
-      return NextResponse.json(
+      return apiJson(
         { error: `Tool custody record ${toolId} not found` },
         { status: 404 }
       );
@@ -65,17 +66,17 @@ export async function PUT(
     );
 
     if (!updatedRecord) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'Failed to update tool custody record' },
         { status: 500 }
       );
     }
 
-    return NextResponse.json(updatedRecord);
+    return apiJson(updatedRecord);
 
   } catch (error) {
     console.error('Error in tool custody update:', error);
-    return NextResponse.json(
+    return apiJson(
       { 
         error: 'Failed to update tool custody record',
         details: error instanceof Error ? error.message : 'Unknown error'

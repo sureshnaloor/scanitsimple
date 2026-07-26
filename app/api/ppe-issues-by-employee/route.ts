@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import { PPEIssueRecord, PPEApiResponse } from '@/types/ppe';
+import { apiJson } from '@/lib/api-response';
 
 // GET - Fetch PPE issues by employee
 export async function GET(request: NextRequest) {
@@ -11,7 +12,7 @@ export async function GET(request: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       console.log('Unauthorized access to PPE Issues API');
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      return apiJson({ success: false, error: 'Unauthorized: sign in before using this feature' }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     if (!userEmpNumber) {
       console.log('No employee number provided');
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'Employee number is required' },
         { status: 400 }
       );
@@ -65,10 +66,10 @@ export async function GET(request: NextRequest) {
     };
 
     console.log('PPE Issues API response:', response);
-    return NextResponse.json(response);
+    return apiJson(response);
   } catch (error) {
     console.error('Error fetching PPE issues by employee:', error);
-    return NextResponse.json(
+    return apiJson(
       { success: false, error: 'Failed to fetch PPE issues by employee' },
       { status: 500 }
     );

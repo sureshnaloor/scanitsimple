@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 export async function GET(request: Request) {
   try {
@@ -7,7 +8,7 @@ export async function GET(request: Request) {
     const model = searchParams.get('model');
 
     if (!model?.trim()) {
-      return NextResponse.json([]);
+      return apiJson([]);
     }
 
     const { client } = await connectToDatabase();
@@ -35,10 +36,10 @@ export async function GET(request: Request) {
       return v.toLowerCase().includes(trimmed.toLowerCase());
     });
 
-    return NextResponse.json(filteredAssets);
+    return apiJson(filteredAssets);
   } catch (err) {
     console.error('Failed to fetch MME by model:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to fetch MME equipment' },
       { status: 500 }
     );

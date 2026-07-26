@@ -274,7 +274,7 @@ export default function DisposedMaterialsPage() {
               Qty: {disposedQuantity.toLocaleString()}
             </div>
             <div className={backgroundStyles.cellSubtext + ' text-xs'}>
-              Value: {new Intl.NumberFormat('en-US', {
+              Value: {(disposedValue as unknown) === '***' ? '***' : new Intl.NumberFormat('en-US', {
                 style: 'currency',
                 currency: 'SAR'
               }).format(disposedValue)}

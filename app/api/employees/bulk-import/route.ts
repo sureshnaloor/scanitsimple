@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../auth/[...nextauth]/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import { EmployeeInsert } from '@/types/ppe';
+import { apiJson } from '@/lib/api-response';
 
 type BulkEmployeeRow = {
   empno: string;
@@ -72,7 +73,7 @@ export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      return apiJson({ success: false, error: 'Unauthorized: sign in before using this feature' }, { status: 401 });
     }
     const createdBy = session.user.email;
 
@@ -81,14 +82,14 @@ export async function POST(request: Request) {
     const rows = Array.isArray(body?.rows) ? body.rows : [];
 
     if (!['validate', 'insert'].includes(action)) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'Invalid action. Use "validate" or "insert".' },
         { status: 400 }
       );
     }
 
     if (!rows.length) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'No rows received for processing.' },
         { status: 400 }
       );
@@ -96,7 +97,7 @@ export async function POST(request: Request) {
 
     const { errors, normalizedRows } = validateRows(rows);
     if (errors.length > 0) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'Validation failed.', errors },
         { status: 400 }
       );
@@ -129,7 +130,7 @@ export async function POST(request: Request) {
     });
 
     if (invalidLookupErrors.length > 0) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'Validation failed.', errors: invalidLookupErrors },
         { status: 400 }
       );
@@ -145,7 +146,7 @@ export async function POST(request: Request) {
     const skippedExisting = normalizedRows.filter((row) => existingEmpnoSet.has(row.empno));
 
     if (action === 'validate') {
-      return NextResponse.json({
+      return apiJson({
         success: true,
         data: {
           totalUploaded: normalizedRows.length,
@@ -164,7 +165,7 @@ export async function POST(request: Request) {
     }
 
     if (newRows.length === 0) {
-      return NextResponse.json(
+      return apiJson(
         {
           success: false,
           error: 'No new employees to insert. All uploaded employee numbers already exist.',
@@ -194,7 +195,7 @@ export async function POST(request: Request) {
 
     const result = await collection.insertMany(insertDocs);
 
-    return NextResponse.json({
+    return apiJson({
       success: true,
       data: {
         insertedCount: result.insertedCount,
@@ -208,7 +209,7 @@ export async function POST(request: Request) {
     });
   } catch (error: any) {
     console.error('Error in employee bulk import:', error);
-    return NextResponse.json(
+    return apiJson(
       {
         success: false,
         error: 'Failed to process bulk employee import.',

@@ -166,10 +166,10 @@ export default function DashboardPage() {
                   overview.recentPpe.map((r) => (
                     <div
                       key={r._id}
-                      className="rounded-lg border border-primary-light/50 bg-primary-slate/50 p-3"
+                      className="group rounded-lg border border-primary-light/50 bg-primary-slate/50 p-3 transition-all hover:border-accent-teal/30 hover:bg-primary-slate hover:shadow-sm"
                     >
                       <div className="flex justify-between gap-2">
-                        <p className="text-sm font-medium text-text-primary">{r.ppeName}</p>
+                        <p className="text-sm font-medium text-text-primary group-hover:text-accent-teal transition-colors">{r.ppeName}</p>
                         <span className="text-xs text-text-muted">{fmtDateTime(r.dateOfIssue)}</span>
                       </div>
                       <p className="mt-1 text-sm text-text-secondary">
@@ -191,10 +191,10 @@ export default function DashboardPage() {
                   overview.recentProjectReturns.map((m) => (
                     <div
                       key={m.materialid}
-                      className="rounded-lg border border-primary-light/50 bg-primary-slate/50 p-3"
+                      className="group rounded-lg border border-primary-light/50 bg-primary-slate/50 p-3 transition-all hover:border-accent-teal/30 hover:bg-primary-slate hover:shadow-sm"
                     >
                       <div className="flex justify-between gap-2">
-                        <p className="text-sm font-medium text-text-primary">{m.materialDescription}</p>
+                        <p className="text-sm font-medium text-text-primary group-hover:text-accent-teal transition-colors">{m.materialDescription}</p>
                         <span className="text-xs text-text-muted">{fmtDateTime(m.createdAt)}</span>
                       </div>
                       <p className="mt-1 text-xs text-text-muted">

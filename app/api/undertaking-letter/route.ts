@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { jsPDF } from 'jspdf';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,7 +10,7 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get('type'); // 'user' or 'warehouse'
     
     if (!assetNumber || !type) {
-      return NextResponse.json({ error: 'Asset number and type are required' }, { status: 400 });
+      return apiJson({ error: 'Asset number and type are required' }, { status: 400 });
     }
 
     // Helper function to determine which collection/API to use based on first digit
@@ -65,11 +66,11 @@ export async function GET(request: NextRequest) {
             }
           ]).toArray();
         if (!agg || agg.length === 0) {
-          return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
+          return apiJson({ error: 'Asset not found' }, { status: 404 });
         }
         asset = agg[0];
       } catch (e) {
-        return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
+        return apiJson({ error: 'Asset not found' }, { status: 404 });
       }
     }
 
@@ -283,6 +284,6 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Error generating undertaking letter:', error);
-    return NextResponse.json({ error: 'Failed to generate undertaking letter' }, { status: 500 });
+    return apiJson({ error: 'Failed to generate undertaking letter' }, { status: 500 });
   }
 }

@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth/next';
 import { ObjectId } from 'mongodb';
 import { authOptions } from '../../auth/[...nextauth]/auth';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 const ALLOWED_LOCATION_TYPES = new Set(['warehouse', 'camp/office', 'project_site', 'department']);
 
@@ -110,7 +111,7 @@ export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return apiJson({ error: 'Unauthorized: sign in before using this feature' }, { status: 401 });
     }
 
     const createdBy = session.user.name || session.user.email;
@@ -118,7 +119,7 @@ export async function POST(request: Request) {
     const file = formData.get('file') as File | null;
 
     if (!file) {
-      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+      return apiJson({ error: 'No file provided' }, { status: 400 });
     }
 
     const arrayBuffer = await file.arrayBuffer();
@@ -135,7 +136,7 @@ export async function POST(request: Request) {
     );
 
     if (nonEmptyRows.length < 2) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'File must contain at least one header row and one data row' },
         { status: 400 }
       );
@@ -147,7 +148,7 @@ export async function POST(request: Request) {
     const requiredFields = ['assetnumber', 'employeenumber', 'employeename', 'locationType', 'custodyfrom'];
     const missingRequiredHeaders = requiredFields.filter((requiredField) => !columnToField.includes(requiredField));
     if (missingRequiredHeaders.length > 0) {
-      return NextResponse.json(
+      return apiJson(
         {
           error: `Missing required header(s): ${missingRequiredHeaders.join(', ')}`,
         },
@@ -210,7 +211,7 @@ export async function POST(request: Request) {
     }
 
     if (errors.length > 0) {
-      return NextResponse.json(
+      return apiJson(
         {
           error: 'Validation failed. Upload aborted; no records inserted.',
           errors,
@@ -220,7 +221,7 @@ export async function POST(request: Request) {
     }
 
     if (docsToInsert.length === 0) {
-      return NextResponse.json({ error: 'No valid records found' }, { status: 400 });
+      return apiJson({ error: 'No valid records found' }, { status: 400 });
     }
 
     const { db } = await connectToDatabase();
@@ -272,12 +273,12 @@ export async function POST(request: Request) {
 
     const result = await db.collection('equipmentcustody').insertMany(docsToInsert);
 
-    return NextResponse.json({
+    return apiJson({
       success: true,
       inserted: result.insertedCount,
     });
   } catch (error) {
     console.error('Failed to import custody records:', error);
-    return NextResponse.json({ error: 'Failed to import custody records' }, { status: 500 });
+    return apiJson({ error: 'Failed to import custody records' }, { status: 500 });
   }
 }

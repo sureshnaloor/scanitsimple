@@ -100,6 +100,64 @@ const config: Config = {
   			'cta-gradient': 'linear-gradient(135deg, #FF6B35 0%, #E85D04 100%)',
   			'category-gradient': 'var(--category-gradient)',
   		},
+  		animation: {
+  			'float': 'float 4s ease-in-out infinite',
+  			'pulse-glow': 'pulse-glow 2.5s ease-in-out infinite',
+  			'sonar': 'sonar 2.5s ease-out infinite',
+  			'marquee': 'marquee 25s linear infinite',
+  			'scan': 'scan 2.5s ease-in-out infinite',
+  			'grid-breathe': 'grid-breathe 6s ease-in-out infinite',
+  			'mesh-1': 'mesh-float-1 12s ease-in-out infinite',
+  			'mesh-2': 'mesh-float-2 14s ease-in-out infinite',
+  			'mesh-3': 'mesh-float-3 16s ease-in-out infinite',
+  			'gradient-rotate': 'gradient-rotate 3s linear infinite',
+  		},
+  		keyframes: {
+  			float: {
+  				'0%, 100%': { transform: 'translateY(0)' },
+  				'50%': { transform: 'translateY(-12px)' },
+  			},
+  			'pulse-glow': {
+  				'0%, 100%': { boxShadow: '0 0 0px rgba(0,180,216,0)' },
+  				'50%': { boxShadow: '0 0 20px rgba(0,180,216,0.3)' },
+  			},
+  			'sonar': {
+  				'0%': { transform: 'scale(0.9)', opacity: '0.5' },
+  				'100%': { transform: 'scale(1.4)', opacity: '0' },
+  			},
+  			marquee: {
+  				'0%': { transform: 'translateX(0)' },
+  				'100%': { transform: 'translateX(-50%)' },
+  			},
+  			scan: {
+  				'0%, 100%': { top: '0', opacity: '0' },
+  				'10%': { opacity: '0.6' },
+  				'50%': { top: '100%' },
+  				'90%': { opacity: '0.6' },
+  			},
+  			'grid-breathe': {
+  				'0%, 100%': { opacity: '0.4' },
+  				'50%': { opacity: '0.7' },
+  			},
+  			'mesh-float-1': {
+  				'0%, 100%': { transform: 'translate(0, 0) scale(1)' },
+  				'33%': { transform: 'translate(80px, 60px) scale(1.1)' },
+  				'66%': { transform: 'translate(-40px, 100px) scale(0.95)' },
+  			},
+  			'mesh-float-2': {
+  				'0%, 100%': { transform: 'translate(0, 0) scale(1)' },
+  				'33%': { transform: 'translate(-60px, -80px) scale(1.05)' },
+  				'66%': { transform: 'translate(40px, -40px) scale(0.9)' },
+  			},
+  			'mesh-float-3': {
+  				'0%, 100%': { transform: 'translate(-50%, 0) scale(1)' },
+  				'33%': { transform: 'translate(-30%, 50px) scale(1.08)' },
+  				'66%': { transform: 'translate(-70%, -30px) scale(0.92)' },
+  			},
+  			'gradient-rotate': {
+  				to: { '--gradient-angle': '360deg' },
+  			},
+  		},
   	}
   },
   plugins: [require("tailwindcss-animate")],

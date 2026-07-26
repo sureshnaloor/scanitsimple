@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 export async function GET(
   request: Request,
@@ -12,16 +13,16 @@ export async function GET(
       .findOne({ assetnumber: params.toolId });
 
     if (!tool) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'Tool not found' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(tool);
+    return apiJson(tool);
   } catch (error) {
     console.error('Failed to fetch tool:', error);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to fetch tool' },
       { status: 500 }
     );
@@ -45,7 +46,7 @@ export async function PUT(
 
     if (!existingTool) {
       console.error('Tool not found in database:', toolId);
-      return NextResponse.json(
+      return apiJson(
         { error: `Tool ${toolId} not found` },
         { status: 404 }
       );
@@ -74,18 +75,18 @@ export async function PUT(
 
     if (!updatedTool) {
       console.error('Update failed for tool:', toolId);
-      return NextResponse.json(
+      return apiJson(
         { error: 'Failed to update tool' },
         { status: 500 }
       );
     }
 
     console.log('Tool updated successfully:', updatedTool);
-    return NextResponse.json(updatedTool);
+    return apiJson(updatedTool);
 
   } catch (error) {
     console.error('Error in tool update:', error);
-    return NextResponse.json(
+    return apiJson(
       { 
         error: 'Failed to update tool',
         details: error instanceof Error ? error.message : 'Unknown error'
@@ -106,7 +107,7 @@ export async function DELETE(
     // Check if tool exists
     const existingTool = await db.collection('tools').findOne({ assetnumber: toolId });
     if (!existingTool) {
-      return NextResponse.json(
+      return apiJson(
         { error: `Tool ${toolId} not found` },
         { status: 404 }
       );
@@ -116,17 +117,17 @@ export async function DELETE(
     const result = await db.collection('tools').deleteOne({ assetnumber: toolId });
 
     if (result.deletedCount === 0) {
-      return NextResponse.json(
+      return apiJson(
         { error: 'Failed to delete tool' },
         { status: 500 }
       );
     }
 
-    return NextResponse.json({ message: 'Tool deleted successfully' });
+    return apiJson({ message: 'Tool deleted successfully' });
 
   } catch (error) {
     console.error('Error deleting tool:', error);
-    return NextResponse.json(
+    return apiJson(
       { 
         error: 'Failed to delete tool',
         details: error instanceof Error ? error.message : 'Unknown error'

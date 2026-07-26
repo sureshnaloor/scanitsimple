@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
+import { apiJson } from '@/lib/api-response';
 
 export async function GET(request: Request) {
     try {
@@ -15,7 +16,7 @@ export async function GET(request: Request) {
 
         // Require at least one filter to avoid loading full dataset
         if (!minValue && !maxValue && !minDate && !maxDate && !searchType) {
-            return NextResponse.json(
+            return apiJson(
                 { error: 'At least one filter is required' },
                 { status: 400 }
             );
@@ -238,7 +239,7 @@ export async function GET(request: Request) {
             .aggregate(pipeline)
             .toArray();
 
-        return NextResponse.json({ 
+        return apiJson({ 
             data: results,
             total: results.length,
             searchType,
@@ -247,7 +248,7 @@ export async function GET(request: Request) {
 
     } catch (error) {
         console.error('Error searching assets:', error);
-        return NextResponse.json(
+        return apiJson(
             { error: 'Failed to search assets' },
             { status: 500 }
         );

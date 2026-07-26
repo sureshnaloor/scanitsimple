@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { Pencil, Trash2, UserX } from 'lucide-react';
 import { Employee } from '@/types/ppe';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ResponsiveTable from '@/components/ui/responsive-table';
 import PPEIssuesByEmployee from '@/components/PPEIssuesByEmployee';
 import { useAppTheme } from '@/app/contexts/ThemeContext';
+import { useAccess } from '@/lib/use-access';
 import * as XLSX from 'xlsx';
 
 interface EmployeeFormData {
@@ -38,6 +40,7 @@ interface MasterLookupItem {
 
 export default function EmployeeManagementPage() {
   const { theme } = useAppTheme();
+  const { isAdmin } = useAccess();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Array<{
     x: number;
@@ -717,31 +720,34 @@ export default function EmployeeManagementPage() {
     ...emp,
     active: emp.active === 'N' ? 'Inactive' : 'Active',
     actions: (
-      <div className="flex gap-2">
-        <Button 
-          size="sm" 
-          onClick={() => handleEdit(emp)}
-          className={backgroundStyles.buttonPrimary}
-        >
-          Edit
-        </Button>
-        <Button 
-          size="sm" 
-          variant="outline" 
+      <div className="flex items-center gap-2">
+        {isAdmin && (
+          <button
+            onClick={() => handleEdit(emp)}
+            className={`p-1 ${backgroundStyles.buttonPrimary} rounded-lg transition-all duration-300`}
+            title="Edit employee"
+            aria-label="Edit employee"
+          >
+            <Pencil className="h-4 w-4" />
+          </button>
+        )}
+        <Button
+          size="sm"
+          variant="outline"
           onClick={() => handleEmployeeSelect(emp)}
           className={backgroundStyles.buttonSecondary}
         >
           View PPE Records
         </Button>
-        {emp.active !== 'N' && (
-          <Button 
-            size="sm" 
-            variant="destructive" 
+        {isAdmin && emp.active !== 'N' && (
+          <button
             onClick={() => handleDeactivate(emp.empno)}
-            className={backgroundStyles.buttonDestructive}
+            className={`p-1 ${backgroundStyles.buttonDestructive} rounded-lg transition-all duration-300`}
+            title="Deactivate employee"
+            aria-label="Deactivate employee"
           >
-            Deactivate
-          </Button>
+            <UserX className="h-4 w-4" />
+          </button>
         )}
       </div>
     )
@@ -770,12 +776,14 @@ export default function EmployeeManagementPage() {
             >
               Employee List
             </TabsTrigger>
-            <TabsTrigger 
-              value="form"
-              className={backgroundStyles.tabsTrigger}
-            >
-              {editingEmployee ? 'Edit Employee' : 'Add New Employee'}
-            </TabsTrigger>
+            {isAdmin && (
+              <TabsTrigger 
+                value="form"
+                className={backgroundStyles.tabsTrigger}
+              >
+                {editingEmployee ? 'Edit Employee' : 'Add New Employee'}
+              </TabsTrigger>
+            )}
             <TabsTrigger value="departments" className={backgroundStyles.tabsTrigger}>
               Departments
             </TabsTrigger>
@@ -846,22 +854,26 @@ export default function EmployeeManagementPage() {
                       </Button>
                     )}
                   </div>
-                  <Button 
-                    onClick={() => setActiveTab('form')}
-                    className={backgroundStyles.buttonPrimary}
-                  >
-                    Add New Employee
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      resetBulkInsertState();
-                      setShowBulkInsertModal(true);
-                    }}
-                    className={backgroundStyles.buttonSecondary}
-                  >
-                    Bulk Insert
-                  </Button>
+                  {isAdmin && (
+                    <>
+                      <Button 
+                        onClick={() => setActiveTab('form')}
+                        className={backgroundStyles.buttonPrimary}
+                      >
+                        Add New Employee
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          resetBulkInsertState();
+                          setShowBulkInsertModal(true);
+                        }}
+                        className={backgroundStyles.buttonSecondary}
+                      >
+                        Bulk Insert
+                      </Button>
+                    </>
+                  )}
                   {(empNumberSearch || searchTerm) && (
                     <Button 
                       variant="outline"
@@ -1040,6 +1052,7 @@ export default function EmployeeManagementPage() {
         <TabsContent value="departments">
           <div className={`${backgroundStyles.cardBg} rounded-2xl p-6 shadow-xl`}>
             <h2 className={`text-2xl font-semibold ${backgroundStyles.cardTitle} mb-6`}>Departments</h2>
+            {isAdmin && (
             <form onSubmit={handleDepartmentSubmit} className="flex flex-col gap-4 md:flex-row md:items-end">
               <div className="flex-1">
                 <label className={`block text-sm font-medium mb-1 ${backgroundStyles.labelText}`}>
@@ -1071,6 +1084,7 @@ export default function EmployeeManagementPage() {
                 )}
               </div>
             </form>
+            )}
 
             <div className="mt-6">
               <ResponsiveTable
@@ -1080,28 +1094,29 @@ export default function EmployeeManagementPage() {
                 ]}
                 data={departments.map((department) => ({
                   name: department.name,
-                  actions: (
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        className={backgroundStyles.buttonPrimary}
+                  actions: isAdmin ? (
+                    <div className="flex items-center gap-2">
+                      <button
+                        className={`p-1 ${backgroundStyles.buttonPrimary} rounded-lg transition-all duration-300`}
+                        title="Edit department"
+                        aria-label="Edit department"
                         onClick={() => {
                           setEditingDepartmentId(department._id);
                           setDepartmentFormName(department.name);
                         }}
                       >
-                        Edit
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        className={backgroundStyles.buttonDestructive}
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        className={`p-1 ${backgroundStyles.buttonDestructive} rounded-lg transition-all duration-300`}
+                        title="Delete department"
+                        aria-label="Delete department"
                         onClick={() => handleDeleteDepartment(department._id)}
                       >
-                        Delete
-                      </Button>
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
-                  )
+                  ) : null
                 }))}
                 variant={theme === 'light' ? 'light' : 'glassmorphic'}
               />
@@ -1112,6 +1127,7 @@ export default function EmployeeManagementPage() {
         <TabsContent value="designations">
           <div className={`${backgroundStyles.cardBg} rounded-2xl p-6 shadow-xl`}>
             <h2 className={`text-2xl font-semibold ${backgroundStyles.cardTitle} mb-6`}>Designation</h2>
+            {isAdmin && (
             <form onSubmit={handleDesignationSubmit} className="flex flex-col gap-4 md:flex-row md:items-end">
               <div className="flex-1">
                 <label className={`block text-sm font-medium mb-1 ${backgroundStyles.labelText}`}>
@@ -1143,6 +1159,7 @@ export default function EmployeeManagementPage() {
                 )}
               </div>
             </form>
+            )}
 
             <div className="mt-6">
               <ResponsiveTable
@@ -1152,28 +1169,29 @@ export default function EmployeeManagementPage() {
                 ]}
                 data={designations.map((designation) => ({
                   name: designation.name,
-                  actions: (
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        className={backgroundStyles.buttonPrimary}
+                  actions: isAdmin ? (
+                    <div className="flex items-center gap-2">
+                      <button
+                        className={`p-1 ${backgroundStyles.buttonPrimary} rounded-lg transition-all duration-300`}
+                        title="Edit designation"
+                        aria-label="Edit designation"
                         onClick={() => {
                           setEditingDesignationId(designation._id);
                           setDesignationFormName(designation.name);
                         }}
                       >
-                        Edit
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        className={backgroundStyles.buttonDestructive}
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        className={`p-1 ${backgroundStyles.buttonDestructive} rounded-lg transition-all duration-300`}
+                        title="Delete designation"
+                        aria-label="Delete designation"
                         onClick={() => handleDeleteDesignation(designation._id)}
                       >
-                        Delete
-                      </Button>
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
-                  )
+                  ) : null
                 }))}
                 variant={theme === 'light' ? 'light' : 'glassmorphic'}
               />

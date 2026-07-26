@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useAccess } from '@/lib/use-access';
 import ResponsiveTable from '@/components/ui/responsive-table';
 import SearchableEmployeeSelect from '@/components/SearchableEmployeeSelect';
 import SearchablePPESelect from '@/components/SearchablePPESelect';
@@ -22,6 +23,7 @@ interface PPEBulkFormData {
 }
 
 export default function PPEBulkIssuesPage() {
+  const { isAdmin } = useAccess();
   const [bulkIssueRecords, setBulkIssueRecords] = useState<PPEBulkIssue[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -163,7 +165,7 @@ export default function PPEBulkIssuesPage() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="list">Bulk Issue Records</TabsTrigger>
-          <TabsTrigger value="form">Create Bulk Issue</TabsTrigger>
+          {isAdmin && <TabsTrigger value="form">Create Bulk Issue</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="list">

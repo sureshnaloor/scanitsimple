@@ -9,6 +9,9 @@ import { AssetQRCode } from '@/components/AssetQRCode';
 import CustomDetailsSection from '@/app/components/CustomDetailsSection';
 import FixedAssetDetailShell from '@/app/components/fixedasset/FixedAssetDetailShell';
 import { fap, formatCurrency } from '@/lib/fixedAssetPageDesign';
+import { useAccess } from '@/lib/use-access';
+import { useAssetMasters } from '@/lib/use-asset-masters';
+import MasterDataSelects from '@/app/components/fixedasset/MasterDataSelects';
 
 export type LicenseType = 'perpetual' | 'annual' | 'other_periodic' | '';
 
@@ -48,6 +51,7 @@ function formatDisplayDate(value: string | Date | null | undefined): string {
 }
 
 export default function SoftwareAssetDetailPage() {
+  const { isAdmin } = useAccess();
   const params = useParams();
   const router = useRouter();
   const assetnumber = typeof params?.assetnumber === 'string' ? params.assetnumber : '';
@@ -69,6 +73,9 @@ export default function SoftwareAssetDetailPage() {
     location: '',
     department: ''
   });
+
+  // Master-data dropdown options, same as the main detail pages
+  const masters = useAssetMasters(true, topForm.assetcategory);
 
   const [licenseForm, setLicenseForm] = useState({
     deviceAssetNumber: '',
@@ -267,7 +274,7 @@ export default function SoftwareAssetDetailPage() {
                 <div>
                   <dt className={fap.textMuted}>Acquisition value</dt>
                   <dd className={`font-medium ${fap.textPrimary}`}>
-                    {typeof asset.acquiredvalue === 'number' ? formatCurrency(asset.acquiredvalue) : '—'}
+                    {(asset.acquiredvalue as unknown) === '***' ? '***' : typeof asset.acquiredvalue === 'number' ? formatCurrency(asset.acquiredvalue) : '—'}
                   </dd>
                 </div>
                 <div>
@@ -279,7 +286,7 @@ export default function SoftwareAssetDetailPage() {
 
             <FixedAssetSection title="Edit asset details" defaultExpanded>
               <div className="w-full max-w-3xl space-y-4">
-                <div className="grid gap-4 sm:grid-cols-2">
+                <fieldset disabled={!isAdmin} className="grid gap-4 sm:grid-cols-2">
                   <label className="block sm:col-span-2">
                     <span className={fap.fieldLabel}>Name / description</span>
                     <input
@@ -288,27 +295,15 @@ export default function SoftwareAssetDetailPage() {
                       onChange={(e) => setTopForm((f) => ({ ...f, assetdescription: e.target.value }))}
                     />
                   </label>
-                  <label className="block">
-                    <span className={fap.fieldLabel}>Category</span>
-                    <input className={fap.input}
-                      value={topForm.assetcategory}
-                      onChange={(e) => setTopForm((f) => ({ ...f, assetcategory: e.target.value }))}
-                    />
-                  </label>
-                  <label className="block">
-                    <span className={fap.fieldLabel}>Subcategory</span>
-                    <input className={fap.input}
-                      value={topForm.assetsubcategory}
-                      onChange={(e) => setTopForm((f) => ({ ...f, assetsubcategory: e.target.value }))}
-                    />
-                  </label>
-                  <label className="block">
-                    <span className={fap.fieldLabel}>Status</span>
-                    <input className={fap.input}
-                      value={topForm.assetstatus}
-                      onChange={(e) => setTopForm((f) => ({ ...f, assetstatus: e.target.value }))}
-                    />
-                  </label>
+                  <MasterDataSelects
+                    category={topForm.assetcategory}
+                    subcategory={topForm.assetsubcategory}
+                    status={topForm.assetstatus}
+                    categories={masters.categories}
+                    subcategories={masters.subcategories}
+                    onPatch={(p) => setTopForm((f) => ({ ...f, ...p }))}
+                    labelClass={fap.fieldLabel}
+                  />
                   <label className="block">
                     <span className={fap.fieldLabel}>Acquisition value</span>
                     <input
@@ -340,10 +335,12 @@ export default function SoftwareAssetDetailPage() {
                       onChange={(e) => setTopForm((f) => ({ ...f, department: e.target.value }))}
                     />
                   </label>
-                </div>
-                <button type="button" onClick={saveTop} disabled={topSaving} className={fap.btnPrimary}>
-                  {topSaving ? 'Saving…' : 'Save asset details'}
-                </button>
+                </fieldset>
+                {isAdmin && (
+                  <button type="button" onClick={saveTop} disabled={topSaving} className={fap.btnPrimary}>
+                    {topSaving ? 'Saving…' : 'Save asset details'}
+                  </button>
+                )}
               </div>
             </FixedAssetSection>
 
@@ -353,7 +350,7 @@ export default function SoftwareAssetDetailPage() {
                   Record where the software is installed and how it is licensed. Use device asset number and/or serial
                   as applicable.
                 </p>
-                <div className="grid gap-4 sm:grid-cols-2">
+                <fieldset disabled={!isAdmin} className="grid gap-4 sm:grid-cols-2">
                   <label className="block">
                     <span className={fap.fieldLabel}>Device asset number</span>
                     <input className={fap.input}
@@ -441,10 +438,12 @@ export default function SoftwareAssetDetailPage() {
                       placeholder="Notes, renewal contacts, etc."
                     />
                   </label>
-                </div>
-                <button type="button" onClick={saveLicense} disabled={licenseSaving} className={fap.btnPrimary}>
-                  {licenseSaving ? 'Saving…' : 'Save installation & license'}
-                </button>
+                </fieldset>
+                {isAdmin && (
+                  <button type="button" onClick={saveLicense} disabled={licenseSaving} className={fap.btnPrimary}>
+                    {licenseSaving ? 'Saving…' : 'Save installation & license'}
+                  </button>
+                )}
               </div>
             </FixedAssetSection>
 

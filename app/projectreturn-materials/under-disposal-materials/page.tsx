@@ -101,6 +101,7 @@ export default function UnderDisposalMaterialsPage() {
       header: 'Source Unit Rate',
       cell: ({ row }) => {
         const rate = row.getValue('sourceUnitRate') as number;
+        if ((rate as unknown) === '***') return '***';
         return (
           <div className="text-gray-900 dark:text-white font-medium">
             {new Intl.NumberFormat('en-US', {

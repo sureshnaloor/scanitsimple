@@ -12,6 +12,9 @@ import { AssetQRCode } from '@/components/AssetQRCode';
 import ResponsiveTanStackTable from '@/components/ui/responsive-tanstack-table';
 import FixedAssetListShell from '@/app/components/fixedasset/FixedAssetListShell';
 import { fap } from '@/lib/fixedAssetPageDesign';
+import { useAccess } from '@/lib/use-access';
+import { useAssetMasters } from '@/lib/use-asset-masters';
+import MasterDataSelects from '@/app/components/fixedasset/MasterDataSelects';
 
 interface SoftwareAsset {
   _id: string;
@@ -59,6 +62,7 @@ function formatDateInput(value: string | Date | null | undefined): string {
 }
 
 export default function SoftwareAssetsPage() {
+  const { isAdmin } = useAccess();
   const [data, setData] = useState<SoftwareAsset[]>([]);
   const [assetNumberSearch, setAssetNumberSearch] = useState('');
   const [assetNameSearch, setAssetNameSearch] = useState('');
@@ -87,6 +91,10 @@ export default function SoftwareAssetsPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [editForm, setEditForm] = useState(emptyForm());
   const [editAssetNumber, setEditAssetNumber] = useState('');
+
+  // Master-data dropdown options for the add form and edit dialog
+  const addMasters = useAssetMasters(true, form.assetcategory);
+  const editMasters = useAssetMasters(true, editForm.assetcategory);
 
   const backgroundStyles = {
     textColor: fap.textPrimary,
@@ -538,6 +546,7 @@ export default function SoftwareAssetsPage() {
       ),
       cell: ({ row }) => {
         const value = row.getValue('acquiredvalue');
+        if ((value as unknown) === '***') return '***';
         return typeof value === 'number'
           ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'SAR' }).format(value)
           : '—';
@@ -559,24 +568,28 @@ export default function SoftwareAssetsPage() {
       header: () => <span className={backgroundStyles.textColor}>Actions</span>,
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => openEdit(row.original)}
-            className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs ${backgroundStyles.inputBg}`}
-            aria-label="Edit"
-          >
-            <PencilIcon className="h-4 w-4" />
-            Edit
-          </button>
-          <button
-            type="button"
-            onClick={() => handleDelete(row.original.assetnumber)}
-            className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs border-red-400/50 text-red-300 hover:bg-red-500/10`}
-            aria-label="Delete"
-          >
-            <TrashIcon className="h-4 w-4" />
-            Delete
-          </button>
+          {isAdmin && (
+            <>
+              <button
+                type="button"
+                onClick={() => openEdit(row.original)}
+                className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs ${backgroundStyles.inputBg}`}
+                aria-label="Edit"
+              >
+                <PencilIcon className="h-4 w-4" />
+                Edit
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDelete(row.original.assetnumber)}
+                className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs border-red-400/50 text-red-300 hover:bg-red-500/10`}
+                aria-label="Delete"
+              >
+                <TrashIcon className="h-4 w-4" />
+                Delete
+              </button>
+            </>
+          )}
         </div>
       )
     }
@@ -598,6 +611,7 @@ export default function SoftwareAssetsPage() {
           </div>
         </div>
 
+        {isAdmin && (
         <form
           onSubmit={handleAddSubmit}
           className={`p-6 ${backgroundStyles.panelBg} rounded-xl shadow-lg space-y-4`}
@@ -624,30 +638,16 @@ export default function SoftwareAssetsPage() {
                 required
               />
             </div>
-            <div>
-              <label className={`block text-sm mb-1 ${backgroundStyles.headerSubtitle}`}>Category</label>
-              <input
-                className={inputClass}
-                value={form.assetcategory}
-                onChange={(e) => setForm((f) => ({ ...f, assetcategory: e.target.value }))}
-              />
-            </div>
-            <div>
-              <label className={`block text-sm mb-1 ${backgroundStyles.headerSubtitle}`}>Subcategory</label>
-              <input
-                className={inputClass}
-                value={form.assetsubcategory}
-                onChange={(e) => setForm((f) => ({ ...f, assetsubcategory: e.target.value }))}
-              />
-            </div>
-            <div>
-              <label className={`block text-sm mb-1 ${backgroundStyles.headerSubtitle}`}>Status</label>
-              <input
-                className={inputClass}
-                value={form.assetstatus}
-                onChange={(e) => setForm((f) => ({ ...f, assetstatus: e.target.value }))}
-              />
-            </div>
+            <MasterDataSelects
+              category={form.assetcategory}
+              subcategory={form.assetsubcategory}
+              status={form.assetstatus}
+              categories={addMasters.categories}
+              subcategories={addMasters.subcategories}
+              onPatch={(p) => setForm((f) => ({ ...f, ...p }))}
+              labelClass={`block text-sm mb-1 ${backgroundStyles.headerSubtitle}`}
+              inputClass={inputClass}
+            />
             <div>
               <label className={`block text-sm mb-1 ${backgroundStyles.headerSubtitle}`}>Acquired value</label>
               <input
@@ -704,6 +704,7 @@ export default function SoftwareAssetsPage() {
             </button>
           </div>
         </form>
+        )}
 
         <div className={`p-6 ${backgroundStyles.panelBg} rounded-xl shadow-lg`}>
           <h2 className={`text-lg font-semibold mb-4 ${backgroundStyles.textColor}`}>Filter (optional)</h2>
@@ -887,30 +888,16 @@ export default function SoftwareAssetsPage() {
                     onChange={(e) => setEditForm((f) => ({ ...f, assetdescription: e.target.value }))}
                   />
                 </div>
-                <div>
-                  <label className={`block text-sm mb-1 ${backgroundStyles.headerSubtitle}`}>Category</label>
-                  <input
-                    className={inputClass}
-                    value={editForm.assetcategory}
-                    onChange={(e) => setEditForm((f) => ({ ...f, assetcategory: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <label className={`block text-sm mb-1 ${backgroundStyles.headerSubtitle}`}>Subcategory</label>
-                  <input
-                    className={inputClass}
-                    value={editForm.assetsubcategory}
-                    onChange={(e) => setEditForm((f) => ({ ...f, assetsubcategory: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <label className={`block text-sm mb-1 ${backgroundStyles.headerSubtitle}`}>Status</label>
-                  <input
-                    className={inputClass}
-                    value={editForm.assetstatus}
-                    onChange={(e) => setEditForm((f) => ({ ...f, assetstatus: e.target.value }))}
-                  />
-                </div>
+                <MasterDataSelects
+                  category={editForm.assetcategory}
+                  subcategory={editForm.assetsubcategory}
+                  status={editForm.assetstatus}
+                  categories={editMasters.categories}
+                  subcategories={editMasters.subcategories}
+                  onPatch={(p) => setEditForm((f) => ({ ...f, ...p }))}
+                  labelClass={`block text-sm mb-1 ${backgroundStyles.headerSubtitle}`}
+                  inputClass={inputClass}
+                />
                 <div>
                   <label className={`block text-sm mb-1 ${backgroundStyles.headerSubtitle}`}>Acquired value</label>
                   <input

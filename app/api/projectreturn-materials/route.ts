@@ -3,6 +3,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]/auth';
+import { apiJson } from '@/lib/api-response';
 
 function generateMaterialId(objectId: string): string {
   // Use a combination of timestamp and random parts for better uniqueness
@@ -26,8 +27,8 @@ export async function GET(request: Request) {
     // Check authentication
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
+      return apiJson(
+        { error: 'Unauthorized: sign in before using this feature' },
         { status: 401 }
       );
     }
@@ -66,10 +67,10 @@ export async function GET(request: Request) {
       .sort({ createdAt: -1 })
       .toArray();
 
-    return NextResponse.json(materials);
+    return apiJson(materials);
   } catch (err) {
     console.error('Failed to fetch project return materials:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to fetch project return materials' },
       { status: 500 }
     );
@@ -81,8 +82,8 @@ export async function POST(request: Request) {
     // Check authentication
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
+      return apiJson(
+        { error: 'Unauthorized: sign in before using this feature' },
         { status: 401 }
       );
     }
@@ -124,10 +125,10 @@ export async function POST(request: Request) {
     
     const result = await db.collection('projreturnmaterials').insertOne(materialData);
     
-    return NextResponse.json({ ...result, materialId }, { status: 201 });
+    return apiJson({ ...result, materialId }, { status: 201 });
   } catch (err) {
     console.error('Failed to create project return material:', err);
-    return NextResponse.json(
+    return apiJson(
       { error: 'Failed to create project return material' },
       { status: 500 }
     );

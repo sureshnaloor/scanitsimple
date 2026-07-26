@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '../../auth/[...nextauth]/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import { PPEStockBalance, PPEApiResponse } from '@/types/ppe';
+import { apiJson } from '@/lib/api-response';
 
 // GET - Get current stock balance for a specific PPE item
 export async function GET(
@@ -12,7 +13,7 @@ export async function GET(
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      return apiJson({ success: false, error: 'Unauthorized: sign in before using this feature' }, { status: 401 });
     }
 
     const { ppeId } = params;
@@ -24,7 +25,7 @@ export async function GET(
     const stockBalance = await collection.findOne({ ppeId }) as PPEStockBalance | null;
     
     if (!stockBalance) {
-      return NextResponse.json(
+      return apiJson(
         { success: false, error: 'Stock balance not found for this PPE' },
         { status: 404 }
       );
@@ -35,10 +36,10 @@ export async function GET(
       data: stockBalance
     };
 
-    return NextResponse.json(response);
+    return apiJson(response);
   } catch (error) {
     console.error('Error fetching PPE stock balance:', error);
-    return NextResponse.json(
+    return apiJson(
       { success: false, error: 'Failed to fetch PPE stock balance' },
       { status: 500 }
     );

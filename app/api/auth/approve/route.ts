@@ -11,7 +11,7 @@ export async function PUT(request: Request) {
     
     if (!session) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Unauthorized: sign in before using this feature' },
         { status: 401 }
       );
     }
