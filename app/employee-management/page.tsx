@@ -191,7 +191,7 @@ export default function EmployeeManagementPage() {
           buttonSecondary: 'bg-gray-100 border-2 border-gray-300 text-gray-700 hover:bg-gray-200',
           buttonDestructive: 'bg-red-600 hover:bg-red-700 text-white border-2 border-red-500',
           selectBg: 'bg-white border-2 border-blue-300 text-gray-900',
-          selectOption: 'bg-white',
+          selectOption: 'bg-white text-gray-900',
           spinnerColor: 'border-blue-500',
           loadingText: 'text-gray-700',
           labelText: 'text-gray-900',

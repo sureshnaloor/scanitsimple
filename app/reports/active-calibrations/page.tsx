@@ -5,6 +5,8 @@ import { format } from 'date-fns';
 import ResponsiveTable from '@/components/ui/responsive-table';
 import Link from 'next/link';
 import { useAppTheme } from '@/app/contexts/ThemeContext';
+import { useAccess } from '@/lib/use-access';
+import { Pencil } from 'lucide-react';
 
 interface ActiveCalibration {
     assetnumber: string;
@@ -23,6 +25,7 @@ type SortOrder = 'asc' | 'desc';
 
 export default function ActiveCalibrationsReport() {
     const { theme } = useAppTheme();
+    const { isAdmin } = useAccess();
     const [calibrations, setCalibrations] = useState<ActiveCalibration[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -261,6 +264,7 @@ export default function ActiveCalibrationsReport() {
         { key: 'calibrationtodate', label: 'Valid Until', sortable: true },
         { key: 'calibratedby', label: 'Calibrated By' },
         { key: 'calibcertificate', label: 'Certificate No.' },
+        ...(isAdmin ? [{ key: 'actions', label: 'Actions' }] : []),
     ];
 
     const getStatusBadgeStyles = (status: string) => {
@@ -328,6 +332,23 @@ export default function ActiveCalibrationsReport() {
         ),
         calibrationdate: format(new Date(item.calibrationdate), 'dd/MM/yyyy'),
         calibrationtodate: format(new Date(item.calibrationtodate), 'dd/MM/yyyy'),
+        ...(isAdmin ? {
+            actions: (
+                <Link
+                    href={`/asset/${item.assetnumber}#calibration`}
+                    className={`inline-flex items-center justify-center p-2 rounded-lg transition-all duration-300 ${
+                        theme === 'light'
+                            ? 'text-blue-600 hover:text-blue-700 hover:bg-blue-50'
+                            : theme === 'glassmorphic'
+                            ? 'text-teal-400 hover:text-teal-300 hover:bg-white/10'
+                            : 'text-teal-400 hover:text-teal-300 hover:bg-slate-700/50'
+                    }`}
+                    title="Edit Record"
+                >
+                    <Pencil className="h-4 w-4" />
+                </Link>
+            )
+        } : {})
     }));
 
     // Map theme to ResponsiveTable variant

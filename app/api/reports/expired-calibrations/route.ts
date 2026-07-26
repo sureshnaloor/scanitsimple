@@ -65,7 +65,8 @@ export async function GET(request: Request) {
                         calibratedby: '$doc.calibratedby',
                         calibcertificate: '$doc.calibcertificate',
                         assetmodel: '$equipmentDetails.assetmodel',
-                        assetmanufacturer: '$equipmentDetails.assetmanufacturer'
+                        assetmanufacturer: '$equipmentDetails.assetmanufacturer',
+                        assetstatus: '$equipmentDetails.assetstatus'
                     }
                 },
                 {

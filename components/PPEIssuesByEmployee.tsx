@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { PPEIssueRecord, Employee } from '@/types/ppe';
+import { useAppTheme } from '@/app/contexts/ThemeContext';
 
 interface PPEIssuesByEmployeeProps {
   onEmployeeSelect?: (employee: Employee) => void;
@@ -32,6 +33,59 @@ export default function PPEIssuesByEmployee({
   showSearch = true,
   preSelectedEmployee = null
 }: PPEIssuesByEmployeeProps) {
+  const { theme } = useAppTheme();
+  const getStyles = () => {
+    if (theme === 'light') {
+      return {
+        cardBg: 'p-6 bg-white border border-blue-200 rounded-2xl shadow-xl',
+        innerCardBg: 'bg-blue-50/50 p-3 rounded-lg shadow-sm border border-blue-100',
+        titleText: 'text-lg font-semibold mb-4 text-gray-900',
+        labelText: 'text-xs font-medium text-gray-600 uppercase tracking-wider',
+        valueText: 'text-sm font-semibold text-gray-900 mt-1',
+        inputText: 'w-full bg-white border border-blue-300 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all',
+        tableBorder: 'border border-blue-200 rounded-lg overflow-hidden shadow-md',
+        tableHeaderBg: 'bg-blue-100/60 border-blue-200',
+        tableHeaderCell: 'border border-blue-200 px-3 py-2 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider',
+        tableHeaderCellCenter: 'border border-blue-200 px-3 py-2 text-center text-xs font-semibold text-gray-900 uppercase tracking-wider',
+        tableBodyRow: 'hover:bg-blue-50/80 transition-all duration-200 border-b border-blue-100',
+        tableBodyCell: 'border border-blue-200 px-3 py-2 text-xs text-gray-700',
+        tableBodyCellCenter: 'border border-blue-200 px-3 py-2 text-center text-xs text-gray-700',
+        textColorMuted: 'text-gray-600 text-sm',
+        textColorMutedCenter: 'text-center py-8 text-gray-600',
+        searchItem: 'p-3 hover:bg-blue-50 cursor-pointer border-b border-blue-100 last:border-b-0 transition-colors duration-200',
+        searchItemName: 'font-medium text-sm text-gray-900',
+        searchItemSub: 'text-xs text-gray-600',
+        searchResultsContainer: 'border border-blue-200 rounded-lg max-h-60 overflow-y-auto bg-white shadow-md',
+        badgeDefault: 'bg-gray-100 text-gray-800 border border-gray-300',
+        quantityText: 'border border-blue-200 px-3 py-2 text-center text-xs font-medium text-blue-600',
+      };
+    }
+    return {
+      cardBg: 'p-6 bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl shadow-xl',
+      innerCardBg: 'bg-white/5 backdrop-blur-sm p-3 rounded-lg shadow-sm border border-white/10',
+      titleText: 'text-lg font-semibold mb-4 text-white',
+      labelText: 'text-xs font-medium text-white/70 uppercase tracking-wider',
+      valueText: 'text-sm font-semibold text-white mt-1',
+      inputText: 'w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-xl text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all',
+      tableBorder: 'border border-white/20 rounded-lg overflow-hidden shadow-md',
+      tableHeaderBg: 'bg-white/10 backdrop-blur-md border-white/20',
+      tableHeaderCell: 'border border-white/20 px-3 py-2 text-left text-xs font-semibold text-white uppercase tracking-wider',
+      tableHeaderCellCenter: 'border border-white/20 px-3 py-2 text-center text-xs font-semibold text-white uppercase tracking-wider',
+      tableBodyRow: 'hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-200 border-b border-white/10',
+      tableBodyCell: 'border border-white/20 px-3 py-2 text-xs text-white',
+      tableBodyCellCenter: 'border border-white/20 px-3 py-2 text-center text-xs text-white',
+      textColorMuted: 'text-white/80 text-sm',
+      textColorMutedCenter: 'text-center py-8 text-white/80',
+      searchItem: 'p-3 hover:bg-white/20 cursor-pointer border-b border-white/10 last:border-b-0 transition-colors duration-200',
+      searchItemName: 'font-medium text-sm text-white',
+      searchItemSub: 'text-xs text-white/80',
+      searchResultsContainer: 'border border-white/20 rounded-lg max-h-60 overflow-y-auto bg-white/10 backdrop-blur-lg shadow-md',
+      badgeDefault: 'bg-white/10 text-white/70 border border-white/20',
+      quantityText: 'border border-white/20 px-3 py-2 text-center text-xs font-medium text-teal-300',
+    };
+  };
+  const s = getStyles();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<Employee[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(preSelectedEmployee);
@@ -261,12 +315,11 @@ export default function PPEIssuesByEmployee({
       day: 'numeric'
     });
   };
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-left">
       {showSearch && (
-        <div className="p-6 bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl shadow-xl">
-          <h3 className="text-lg font-semibold mb-4 text-white">Search Employee</h3>
+        <div className={s.cardBg}>
+          <h3 className={s.titleText}>Search Employee</h3>
           <div className="space-y-4">
             <div className="relative">
               <Input
@@ -274,12 +327,12 @@ export default function PPEIssuesByEmployee({
                 placeholder="Enter employee number or name (min 5 characters for name)"
                 value={searchTerm}
                 onChange={handleSearchChange}
-                className="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-xl text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all"
+                className={s.inputText}
               />
               {/^\d+$/.test(searchTerm) && (
                 <Button 
                   onClick={handleDirectSearch}
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-teal-500 hover:bg-teal-600 text-white"
+                  className={`absolute right-2 top-1/2 transform -translate-y-1/2 ${theme === 'light' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-teal-500 hover:bg-teal-600'} text-white`}
                   size="sm"
                 >
                   Search
@@ -289,15 +342,15 @@ export default function PPEIssuesByEmployee({
 
             {/* Search Results */}
             {showSearchResults && searchResults.length > 0 && (
-              <div className="border border-white/20 rounded-lg max-h-60 overflow-y-auto bg-white/10 backdrop-blur-lg shadow-md">
+              <div className={s.searchResultsContainer}>
                 {searchResults.map((employee) => (
                   <div
                     key={employee.empno}
-                    className="p-3 hover:bg-white/20 cursor-pointer border-b border-white/10 last:border-b-0 transition-colors duration-200"
+                    className={s.searchItem}
                     onClick={() => handleEmployeeSelect(employee)}
                   >
-                    <div className="font-medium text-sm text-white">{employee.empname}</div>
-                    <div className="text-xs text-white/80">
+                    <div className={s.searchItemName}>{employee.empname}</div>
+                    <div className={s.searchItemSub}>
                       {employee.empno} • {employee.department || 'No Department'}
                     </div>
                   </div>
@@ -306,7 +359,7 @@ export default function PPEIssuesByEmployee({
             )}
 
             {error && (
-              <div className="text-red-300 text-sm">{error}</div>
+              <div className={`${theme === 'light' ? 'text-red-600' : 'text-red-300'} text-sm`}>{error}</div>
             )}
           </div>
         </div>
@@ -314,27 +367,27 @@ export default function PPEIssuesByEmployee({
 
       {/* Selected Employee Info */}
       {selectedEmployee && (
-        <div className="p-6 bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl shadow-xl">
-          <h3 className="text-lg font-semibold mb-4 text-white">Selected Employee</h3>
+        <div className={s.cardBg}>
+          <h3 className={s.titleText}>Selected Employee</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-white/5 backdrop-blur-sm p-3 rounded-lg shadow-sm border border-white/10">
-              <label className="text-xs font-medium text-white/70 uppercase tracking-wider">Name</label>
-              <p className="text-sm font-semibold text-white mt-1">{selectedEmployee.empname}</p>
+            <div className={s.innerCardBg}>
+              <label className={s.labelText}>Name</label>
+              <p className={s.valueText}>{selectedEmployee.empname}</p>
             </div>
-            <div className="bg-white/5 backdrop-blur-sm p-3 rounded-lg shadow-sm border border-white/10">
-              <label className="text-xs font-medium text-white/70 uppercase tracking-wider">Employee Number</label>
-              <p className="text-sm font-semibold text-white mt-1">{selectedEmployee.empno}</p>
+            <div className={s.innerCardBg}>
+              <label className={s.labelText}>Employee Number</label>
+              <p className={s.valueText}>{selectedEmployee.empno}</p>
             </div>
             {selectedEmployee.department && (
-              <div className="bg-white/5 backdrop-blur-sm p-3 rounded-lg shadow-sm border border-white/10">
-                <label className="text-xs font-medium text-white/70 uppercase tracking-wider">Department</label>
-                <p className="text-sm font-semibold text-white mt-1">{selectedEmployee.department}</p>
+              <div className={s.innerCardBg}>
+                <label className={s.labelText}>Department</label>
+                <p className={s.valueText}>{selectedEmployee.department}</p>
               </div>
             )}
             {selectedEmployee.designation && (
-              <div className="bg-white/5 backdrop-blur-sm p-3 rounded-lg shadow-sm border border-white/10">
-                <label className="text-xs font-medium text-white/70 uppercase tracking-wider">Designation</label>
-                <p className="text-sm font-semibold text-white mt-1">{selectedEmployee.designation}</p>
+              <div className={s.innerCardBg}>
+                <label className={s.labelText}>Designation</label>
+                <p className={s.valueText}>{selectedEmployee.designation}</p>
               </div>
             )}
           </div>
@@ -343,47 +396,49 @@ export default function PPEIssuesByEmployee({
 
       {/* Past PPE Issues Table */}
       {selectedEmployee && (
-        <div className="p-6 bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl shadow-xl">
-          <h3 className="text-lg font-semibold mb-4 text-white">Past PPE Issues (Historical Data)</h3>
+        <div className={s.cardBg}>
+          <h3 className={s.titleText}>Past PPE Issues (Historical Data)</h3>
           
           {loading ? (
             <div className="text-center py-8">
-              <div className="inline-block animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-teal-400"></div>
-              <p className="mt-2 text-sm text-white/80">Loading historical PPE issues...</p>
+              <div className={`inline-block animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 ${theme === 'light' ? 'border-blue-500' : 'border-teal-400'}`}></div>
+              <p className={s.textColorMuted}>Loading historical PPE issues...</p>
             </div>
           ) : ppeIssues.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse border border-white/20 rounded-lg overflow-hidden shadow-md">
-                <thead>
-                  <tr className="bg-white/10 backdrop-blur-md border-white/20">
-                    <th className="border border-white/20 px-3 py-2 text-left text-xs font-semibold text-white uppercase tracking-wider">Date of Issue</th>
-                    <th className="border border-white/20 px-3 py-2 text-left text-xs font-semibold text-white uppercase tracking-wider">PPE Name</th>
-                    <th className="border border-white/20 px-3 py-2 text-center text-xs font-semibold text-white uppercase tracking-wider">Quantity</th>
-                    <th className="border border-white/20 px-3 py-2 text-center text-xs font-semibold text-white uppercase tracking-wider">Size</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white/5">
-                  {ppeIssues.map((issue, index) => (
-                    <tr key={issue._id || index} className="hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-200 border-b border-white/10">
-                      <td className="border border-white/20 px-3 py-2 text-xs text-white">
-                        {formatDate(issue.dateOfIssue)}
-                      </td>
-                      <td className="border border-white/20 px-3 py-2 text-xs text-white">
-                        {String(issue.ppeName || '')}
-                      </td>
-                      <td className="border border-white/20 px-3 py-2 text-center text-xs font-medium text-teal-300">
-                        {typeof issue.quantityIssued === 'number' ? issue.quantityIssued : String(issue.quantityIssued || 0)}
-                      </td>
-                      <td className="border border-white/20 px-3 py-2 text-center text-xs font-medium text-teal-300">
-                        {String(issue.size || '-')}
-                      </td>
+              <div className={s.tableBorder}>
+                <table className="w-full border-collapse rounded-lg overflow-hidden">
+                  <thead>
+                    <tr className={s.tableHeaderBg}>
+                      <th className={s.tableHeaderCell}>Date of Issue</th>
+                      <th className={s.tableHeaderCell}>PPE Name</th>
+                      <th className={s.tableHeaderCellCenter}>Quantity</th>
+                      <th className={s.tableHeaderCellCenter}>Size</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {ppeIssues.map((issue, index) => (
+                      <tr key={issue._id || index} className={s.tableBodyRow}>
+                        <td className={s.tableBodyCell}>
+                          {formatDate(issue.dateOfIssue)}
+                        </td>
+                        <td className={s.tableBodyCell}>
+                          {String(issue.ppeName || '')}
+                        </td>
+                        <td className={s.quantityText}>
+                          {typeof issue.quantityIssued === 'number' ? issue.quantityIssued : String(issue.quantityIssued || 0)}
+                        </td>
+                        <td className={s.quantityText}>
+                          {String(issue.size || '-')}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           ) : (
-            <div className="text-center py-8 text-white/80">
+            <div className={s.textColorMutedCenter}>
               <p className="text-sm">No historical PPE issues found for this employee.</p>
             </div>
           )}
@@ -392,75 +447,77 @@ export default function PPEIssuesByEmployee({
 
       {/* New PPE Issues Table */}
       {selectedEmployee && (
-        <div className="p-6 bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl shadow-xl">
-          <h3 className="text-lg font-semibold mb-4 text-white">New PPE Issues (Current System)</h3>
+        <div className={s.cardBg}>
+          <h3 className={s.titleText}>New PPE Issues (Current System)</h3>
           
           {newIssuesLoading ? (
             <div className="text-center py-8">
-              <div className="inline-block animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-teal-400"></div>
-              <p className="mt-2 text-sm text-white/80">Loading current PPE issues...</p>
+              <div className={`inline-block animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 ${theme === 'light' ? 'border-blue-500' : 'border-teal-400'}`}></div>
+              <p className={s.textColorMuted}>Loading current PPE issues...</p>
             </div>
           ) : newPpeIssues.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse border border-white/20 rounded-lg overflow-hidden shadow-md">
-                <thead>
-                  <tr className="bg-white/10 backdrop-blur-md border-white/20">
-                    <th className="border border-white/20 px-3 py-2 text-left text-xs font-semibold text-white uppercase tracking-wider">Date of Issue</th>
-                    <th className="border border-white/20 px-3 py-2 text-left text-xs font-semibold text-white uppercase tracking-wider">PPE Name</th>
-                    <th className="border border-white/20 px-3 py-2 text-center text-xs font-semibold text-white uppercase tracking-wider">Quantity</th>
-                    <th className="border border-white/20 px-3 py-2 text-center text-xs font-semibold text-white uppercase tracking-wider">Size</th>
-                    <th className="border border-white/20 px-3 py-2 text-center text-xs font-semibold text-white uppercase tracking-wider">First Issue</th>
-                    <th className="border border-white/20 px-3 py-2 text-center text-xs font-semibold text-white uppercase tracking-wider">Issue Type</th>
-                    <th className="border border-white/20 px-3 py-2 text-left text-xs font-semibold text-white uppercase tracking-wider">Issued By</th>
-                    <th className="border border-white/20 px-3 py-2 text-left text-xs font-semibold text-white uppercase tracking-wider">Remarks</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white/5">
-                  {newPpeIssues.map((issue, index) => (
-                    <tr key={issue._id || index} className="hover:bg-white/10 hover:backdrop-blur-sm transition-all duration-200 border-b border-white/10">
-                      <td className="border border-white/20 px-3 py-2 text-xs text-white">
-                        {formatDate(issue.dateOfIssue)}
-                      </td>
-                      <td className="border border-white/20 px-3 py-2 text-xs text-white">
-                        {String(issue.ppeName || '')}
-                      </td>
-                      <td className="border border-white/20 px-3 py-2 text-center text-xs font-medium text-teal-300">
-                        {typeof issue.quantityIssued === 'number' ? issue.quantityIssued : String(issue.quantityIssued || 0)}
-                      </td>
-                      <td className="border border-white/20 px-3 py-2 text-center text-xs font-medium text-teal-300">
-                        {String(issue.size || '-')}
-                      </td>
-                      <td className="border border-white/20 px-3 py-2 text-center text-xs">
-                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                          issue.isFirstIssue 
-                            ? 'bg-green-500/20 text-green-300 border border-green-400/30' 
-                            : 'bg-white/10 text-white/70 border border-white/20'
-                        }`}>
-                          {String(issue.isFirstIssue ? 'Yes' : 'No')}
-                        </span>
-                      </td>
-                      <td className="border border-white/20 px-3 py-2 text-center text-xs">
-                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                          issue.issueAgainstDue 
-                            ? 'bg-teal-500/20 text-teal-300 border border-teal-400/30' 
-                            : 'bg-red-500/20 text-red-300 border border-red-400/30'
-                        }`}>
-                          {String(issue.issueAgainstDue ? 'Due' : 'Damage')}
-                        </span>
-                      </td>
-                      <td className="border border-white/20 px-3 py-2 text-xs text-white">
-                        {String(issue.issuedByName || '')}
-                      </td>
-                      <td className="border border-white/20 px-3 py-2 text-xs text-white">
-                        {String(issue.remarks || '-')}
-                      </td>
+              <div className={s.tableBorder}>
+                <table className="w-full border-collapse rounded-lg overflow-hidden">
+                  <thead>
+                    <tr className={s.tableHeaderBg}>
+                      <th className={s.tableHeaderCell}>Date of Issue</th>
+                      <th className={s.tableHeaderCell}>PPE Name</th>
+                      <th className={s.tableHeaderCellCenter}>Quantity</th>
+                      <th className={s.tableHeaderCellCenter}>Size</th>
+                      <th className={s.tableHeaderCellCenter}>First Issue</th>
+                      <th className={s.tableHeaderCellCenter}>Issue Type</th>
+                      <th className={s.tableHeaderCell}>Issued By</th>
+                      <th className={s.tableHeaderCell}>Remarks</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {newPpeIssues.map((issue, index) => (
+                      <tr key={issue._id || index} className={s.tableBodyRow}>
+                        <td className={s.tableBodyCell}>
+                          {formatDate(issue.dateOfIssue)}
+                        </td>
+                        <td className={s.tableBodyCell}>
+                          {String(issue.ppeName || '')}
+                        </td>
+                        <td className={s.quantityText}>
+                          {typeof issue.quantityIssued === 'number' ? issue.quantityIssued : String(issue.quantityIssued || 0)}
+                        </td>
+                        <td className={s.quantityText}>
+                          {String(issue.size || '-')}
+                        </td>
+                        <td className={s.tableBodyCellCenter}>
+                          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                            issue.isFirstIssue 
+                              ? 'bg-green-500/20 text-green-300 border border-green-400/30' 
+                              : s.badgeDefault
+                          }`}>
+                            {String(issue.isFirstIssue ? 'Yes' : 'No')}
+                          </span>
+                        </td>
+                        <td className={s.tableBodyCellCenter}>
+                          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                            issue.issueAgainstDue 
+                              ? 'bg-teal-500/20 text-teal-300 border border-teal-400/30' 
+                              : 'bg-red-500/20 text-red-300 border border-red-400/30'
+                          }`}>
+                            {String(issue.issueAgainstDue ? 'Due' : 'Damage')}
+                          </span>
+                        </td>
+                        <td className={s.tableBodyCell}>
+                          {String(issue.issuedByName || '')}
+                        </td>
+                        <td className={s.tableBodyCell}>
+                          {String(issue.remarks || '-')}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           ) : (
-            <div className="text-center py-8 text-white/80">
+            <div className={s.textColorMutedCenter}>
               <p className="text-sm">No current PPE issues found for this employee.</p>
             </div>
           )}
