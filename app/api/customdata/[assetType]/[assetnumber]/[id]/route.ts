@@ -6,8 +6,18 @@ import { connectToDatabase } from '@/lib/mongodb';
 import { apiJson } from '@/lib/api-response';
 
 const COLLECTION = 'customdata';
-const ASSET_TYPES = new Set(['portable', 'software', 'transport', 'facility', 'mme', 'fixedasset']);
-const FIELD_TYPES = new Set(['text', 'number', 'date']);
+const ASSET_TYPES = new Set([
+  'portable',
+  'software',
+  'transport',
+  'facility',
+  'mme',
+  'fixedasset',
+  'tool',
+  'custody',
+  'calibration',
+]);
+const FIELD_TYPES = new Set(['text', 'number', 'date', 'toggle', 'radio', 'master-select']);
 
 export async function PUT(
   request: Request,
@@ -45,11 +55,17 @@ export async function PUT(
       updatedat: new Date(),
     };
 
-    if (fieldType === 'text') {
+    if (fieldType === 'toggle') {
+      updateDoc.valueBool = Boolean(body?.valueBool);
+      updateDoc.valueText = null;
+      updateDoc.valueNumber = null;
+      updateDoc.valueDate = null;
+    } else if (fieldType === 'text' || fieldType === 'radio' || fieldType === 'master-select') {
       updateDoc.valueText =
         body?.valueText === null || body?.valueText === undefined ? null : String(body.valueText);
       updateDoc.valueNumber = null;
       updateDoc.valueDate = null;
+      updateDoc.valueBool = null;
     } else if (fieldType === 'number') {
       if (body?.valueNumber === null || body?.valueNumber === undefined || body?.valueNumber === '') {
         updateDoc.valueNumber = null;
@@ -62,6 +78,7 @@ export async function PUT(
       }
       updateDoc.valueText = null;
       updateDoc.valueDate = null;
+      updateDoc.valueBool = null;
     } else {
       if (body?.valueDate === null || body?.valueDate === undefined || body?.valueDate === '') {
         updateDoc.valueDate = null;
@@ -74,6 +91,7 @@ export async function PUT(
       }
       updateDoc.valueText = null;
       updateDoc.valueNumber = null;
+      updateDoc.valueBool = null;
     }
 
     const { db } = await connectToDatabase();

@@ -5,8 +5,18 @@ import { connectToDatabase } from '@/lib/mongodb';
 import { apiJson } from '@/lib/api-response';
 
 const COLLECTION = 'customdata';
-const ASSET_TYPES = new Set(['portable', 'software', 'transport', 'facility', 'mme', 'fixedasset']);
-const FIELD_TYPES = new Set(['text', 'number', 'date']);
+const ASSET_TYPES = new Set([
+  'portable',
+  'software',
+  'transport',
+  'facility',
+  'mme',
+  'fixedasset',
+  'tool',
+  'custody',
+  'calibration',
+]);
+const FIELD_TYPES = new Set(['text', 'number', 'date', 'toggle', 'radio', 'master-select']);
 
 function isValidAssetType(value: string): boolean {
   return ASSET_TYPES.has(value);
@@ -69,10 +79,20 @@ export async function POST(
       createdat: new Date(),
     };
 
-    if (fieldType === 'text') {
+    // Optional link to an admin-defined custom field definition
+    if (body?.defId) doc.defId = String(body.defId);
+    if (body?.fieldKey) doc.fieldKey = String(body.fieldKey);
+
+    if (fieldType === 'toggle') {
+      doc.valueBool = Boolean(body?.valueBool);
+      doc.valueText = null;
+      doc.valueNumber = null;
+      doc.valueDate = null;
+    } else if (fieldType === 'radio' || fieldType === 'master-select' || fieldType === 'text') {
       doc.valueText = body?.valueText === null || body?.valueText === undefined ? null : String(body.valueText);
       doc.valueNumber = null;
       doc.valueDate = null;
+      doc.valueBool = null;
     } else if (fieldType === 'number') {
       if (body?.valueNumber === null || body?.valueNumber === undefined || body?.valueNumber === '') {
         doc.valueNumber = null;
@@ -85,6 +105,7 @@ export async function POST(
       }
       doc.valueText = null;
       doc.valueDate = null;
+      doc.valueBool = null;
     } else {
       if (body?.valueDate === null || body?.valueDate === undefined || body?.valueDate === '') {
         doc.valueDate = null;
@@ -97,6 +118,7 @@ export async function POST(
       }
       doc.valueText = null;
       doc.valueNumber = null;
+      doc.valueBool = null;
     }
 
     const { db } = await connectToDatabase();

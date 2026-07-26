@@ -5,6 +5,7 @@ import { ToolData, ToolCustody } from '@/types/tools';
 import ToolDetails from '@/app/components/ToolDetails';
 import ToolCustodyDetails from '@/app/components/ToolCustodyDetails';
 import CollapsibleSection from '@/app/components/CollapsibleSection';
+import CustomDetailsSection from '@/app/components/CustomDetailsSection';
 
 export default function ToolDetailPage() {
   const params = useParams();
@@ -177,13 +178,17 @@ export default function ToolDetailPage() {
           </CollapsibleSection>
 
           <CollapsibleSection title="Custody Details">
-            <ToolCustodyDetails 
+            <ToolCustodyDetails
               currentCustody={custodyRecords.length > 0 ? custodyRecords[0] : null}
               custodyHistory={custodyRecords.length > 1 ? custodyRecords.slice(1) : []}
               onUpdate={handleCustodyUpdate}
               assetnumber={toolId}
             />
           </CollapsibleSection>
+
+          <div className="w-full max-w-4xl">
+            <CustomDetailsSection assetType="tool" assetnumber={toolId} />
+          </div>
         </main>
         
       </div>

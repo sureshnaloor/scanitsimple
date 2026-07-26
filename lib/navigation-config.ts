@@ -31,6 +31,7 @@ import {
   TrashIcon,
   ArrowPathIcon,
   ListBulletIcon,
+  AdjustmentsHorizontalIcon,
 } from '@heroicons/react/24/outline';
 import type { ComponentType, SVGProps } from 'react';
 
@@ -199,6 +200,7 @@ export const subLinksMap: Record<NavigationSection, SidebarSubLink[]> = {
   admin: withIconPalette([
     { name: 'Projects', href: '/admin/projects', icon: CubeIcon },
     { name: 'Locations', href: '/admin/locations', icon: BuildingOfficeIcon },
+    { name: 'Custom Fields', href: '/admin/custom-fields', icon: AdjustmentsHorizontalIcon },
   ]),
 };
 

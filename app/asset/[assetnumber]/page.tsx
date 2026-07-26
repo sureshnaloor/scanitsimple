@@ -268,6 +268,18 @@ export default function AssetPage() {
                 </FixedAssetSection>
 
                 <CustomDetailsSection assetType="mme" assetnumber={assetnumber} />
+                <CustomDetailsSection
+                  assetType="custody"
+                  assetnumber={assetnumber}
+                  title="Custom custody details"
+                  hideWhenEmpty
+                />
+                <CustomDetailsSection
+                  assetType="calibration"
+                  assetnumber={assetnumber}
+                  title="Custom calibration details"
+                  hideWhenEmpty
+                />
               </div>
 
               <aside className={`${fap.sidebarSticky} space-y-4`}>
