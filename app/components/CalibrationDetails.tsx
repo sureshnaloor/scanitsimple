@@ -8,7 +8,11 @@ import { useSession } from 'next-auth/react';
 
 interface CalibrationCompany {
   _id: string;
+  code: string;
   name: string;
+  address?: string;
+  city?: string;
+  country?: string;
 }
 
 import type { Theme } from '@/app/components/AssetDetails';

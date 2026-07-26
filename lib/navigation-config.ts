@@ -141,6 +141,7 @@ export const subLinksMap: Record<NavigationSection, SidebarSubLink[]> = {
     { name: 'Category', href: '/mme/category', icon: TagIcon },
     { name: 'Subcategory', href: '/mme/subcategory', icon: ListBulletIcon },
     { name: 'Manufacturer', href: '/mme/manufacturer', icon: BuildingOfficeIcon },
+    { name: 'Calibration Company', href: '/mme/calibration-company', icon: BuildingLibraryIcon },
   ]),
   assets: withIconPalette([
     { name: 'Assets Overview', href: '/fixedasset', icon: BuildingOfficeIcon },
