@@ -45,6 +45,11 @@ export default function MaterialTransactionsPage() {
   // Sorting order toggle for material code
   const [sortAsc, setSortAsc] = useState(true);
 
+  // Search and date filters
+  const [searchQuery, setSearchQuery] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
   const fetchInitialData = async () => {
     try {
       const [matRes, batchRes, txRes, locRes, issueRes] = await Promise.all([
@@ -140,6 +145,37 @@ export default function MaterialTransactionsPage() {
     return list;
   }, [transactions, issues, materials, batches, locations, sortAsc]);
 
+  // Filter unified ledger based on search query and date range
+  const filteredLedger = useMemo(() => {
+    return unifiedLedger.filter(row => {
+      // 1. Search Query Filter (matches materialCode, poNumber, materialDescription, batchNumber)
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase().trim();
+        const matchesCode = row.materialCode.toLowerCase().includes(query);
+        const matchesDesc = row.materialDescription.toLowerCase().includes(query);
+        const matchesPO = row.poNumber.toLowerCase().includes(query);
+        const matchesBatch = row.batchNumber.toLowerCase().includes(query);
+        if (!matchesCode && !matchesDesc && !matchesPO && !matchesBatch) {
+          return false;
+        }
+      }
+
+      // 2. Date Range Filter
+      if (startDate) {
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        if (row.date < start) return false;
+      }
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        if (row.date > end) return false;
+      }
+
+      return true;
+    });
+  }, [unifiedLedger, searchQuery, startDate, endDate]);
+
   const handleCreate = () => {
     setSelectedTransaction(null);
     setShowForm(true);
@@ -202,7 +238,51 @@ export default function MaterialTransactionsPage() {
 
   return (
     <MasterDataPageShell>
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Material Transactions Ledger</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Material Transactions Ledger</h1>
+
+      {/* Filters Panel */}
+      <div className="bg-slate-50 dark:bg-slate-900/40 rounded-xl p-4 mb-6 border border-slate-200/80 dark:border-slate-800/80 flex flex-wrap gap-4 items-end">
+        <div className="flex-1 min-w-[200px]">
+          <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Search</label>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search Material Code, Description, PO, Batch..."
+            className="w-full text-sm bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
+        <div className="w-[180px]">
+          <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">From Date</label>
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="w-full text-sm bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
+        <div className="w-[180px]">
+          <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">To Date</label>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="w-full text-sm bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
+        {(searchQuery || startDate || endDate) && (
+          <button
+            onClick={() => {
+              setSearchQuery('');
+              setStartDate('');
+              setEndDate('');
+            }}
+            className="text-xs text-red-600 hover:text-red-700 font-semibold px-3 py-2.5 rounded-lg border border-red-200 hover:border-red-300 dark:border-red-950 dark:hover:border-red-900 bg-red-50/50 dark:bg-red-950/20 transition-all cursor-pointer"
+          >
+            Clear Filters
+          </button>
+        )}
+      </div>
       
       <div className="flex justify-between mb-4">
         <button onClick={handleCreate} className={fap.btnPrimary}>Record Receipt (PO)</button>
@@ -218,6 +298,21 @@ export default function MaterialTransactionsPage() {
         <div className="text-center py-12 text-gray-500 dark:text-gray-400">
           <p className="text-lg">No material transactions recorded yet</p>
           <p className="text-sm mt-1">Click &quot;Record Receipt (PO)&quot; to log material receiving into storage</p>
+        </div>
+      ) : filteredLedger.length === 0 ? (
+        <div className="text-center py-12 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-xl border border-slate-200 dark:border-slate-800">
+          <p className="text-lg font-semibold">No matching transactions found</p>
+          <p className="text-sm mt-1">Try adjusting your search query or date range filters</p>
+          <button
+            onClick={() => {
+              setSearchQuery('');
+              setStartDate('');
+              setEndDate('');
+            }}
+            className="mt-4 text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-1.5 px-4 rounded-lg transition-colors cursor-pointer"
+          >
+            Reset Filters
+          </button>
         </div>
       ) : (
         <div className="rounded-xl overflow-hidden shadow-md bg-white dark:bg-gray-800 border border-slate-200 dark:border-[#2A3B4C]/30 p-4">
@@ -240,7 +335,7 @@ export default function MaterialTransactionsPage() {
                   let prevCode = '';
                   let prevBatch = '';
 
-                  return unifiedLedger.map((row) => {
+                  return filteredLedger.map((row) => {
                     const showCodeHeader = row.materialCode !== prevCode;
                     const showBatchHeader = showCodeHeader || row.batchNumber !== prevBatch;
 

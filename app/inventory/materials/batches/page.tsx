@@ -59,6 +59,11 @@ export default function MaterialBatchesPage() {
   // Expandable row state
   const [expandedBatchIds, setExpandedBatchIds] = useState<Record<string, boolean>>({});
 
+  // Search and date filters
+  const [searchQuery, setSearchQuery] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
   const fetchInitialData = async () => {
     try {
       const [batchRes, matRes, txRes, locRes] = await Promise.all([
@@ -138,6 +143,60 @@ export default function MaterialBatchesPage() {
 
     return mappedParents;
   }, [batches, materials, transactions, locations, sortKey, sortAsc]);
+
+  // Filter flatRows based on search query and date range
+  const filteredFlatRows = useMemo(() => {
+    return flatRows.map(row => {
+      // Filter child issues if search query is active
+      let filteredIssues = row.issues;
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase().trim();
+        filteredIssues = row.issues.filter(child => 
+          child.materialCode.toLowerCase().includes(query) ||
+          child.materialDescription.toLowerCase().includes(query) ||
+          child.transactionPO.toLowerCase().includes(query) ||
+          child.storageDetails.toLowerCase().includes(query) ||
+          (child.remarks || '').toLowerCase().includes(query)
+        );
+      }
+      return {
+        ...row,
+        issues: filteredIssues
+      };
+    }).filter(row => {
+      // 1. Search Query Filter
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase().trim();
+        const matchesCode = row.materialCode.toLowerCase().includes(query);
+        const matchesDesc = row.materialDescription.toLowerCase().includes(query);
+        const matchesPO = row.transactionPO.toLowerCase().includes(query);
+        const matchesStorage = row.storageDetails.toLowerCase().includes(query);
+        const matchesRemarks = (row.remarks || '').toLowerCase().includes(query);
+        
+        // Retain if parent matches OR has matching child issues
+        const hasMatchingChild = row.issues.length > 0;
+
+        if (!matchesCode && !matchesDesc && !matchesPO && !matchesStorage && !matchesRemarks && !hasMatchingChild) {
+          return false;
+        }
+      }
+
+      // 2. Date Range Filter
+      const rowDate = row.createdAt ? new Date(row.createdAt) : new Date();
+      if (startDate) {
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        if (rowDate < start) return false;
+      }
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        if (rowDate > end) return false;
+      }
+
+      return true;
+    });
+  }, [flatRows, searchQuery, startDate, endDate]);
 
   const handleSort = (key: string) => {
     if (sortKey === key) {
@@ -246,12 +305,72 @@ export default function MaterialBatchesPage() {
 
   return (
     <MasterDataPageShell>
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Unique Material Batches</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Unique Material Batches</h1>
       
+      {batches.length > 0 && (
+        <div className="bg-slate-50 dark:bg-slate-900/40 rounded-xl p-4 mb-6 border border-slate-200/80 dark:border-slate-800/80 flex flex-wrap gap-4 items-end">
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Search</label>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search Material Code, Description, PO, Batch..."
+              className="w-full text-sm bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+          <div className="w-[180px]">
+            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">From Date</label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-full text-sm bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+          <div className="w-[180px]">
+            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">To Date</label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="w-full text-sm bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+          {(searchQuery || startDate || endDate) && (
+            <button
+              onClick={() => {
+                setSearchQuery('');
+                setStartDate('');
+                setEndDate('');
+              }}
+              className="text-xs text-red-600 hover:text-red-700 font-semibold px-3 py-2.5 rounded-lg border border-red-200 hover:border-red-300 dark:border-red-950 dark:hover:border-red-900 bg-red-50/50 dark:bg-red-950/20 transition-all cursor-pointer"
+            >
+              Clear Filters
+            </button>
+          )}
+        </div>
+      )}
+
       {batches.length === 0 ? (
         <div className="text-center py-12 text-gray-500 dark:text-gray-400">
           <p className="text-lg">No material batches linked yet</p>
           <p className="text-sm mt-1">Batches are created automatically when material receipts are logged under Material Transactions</p>
+        </div>
+      ) : filteredFlatRows.length === 0 ? (
+        <div className="text-center py-12 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-xl border border-slate-200 dark:border-slate-800">
+          <p className="text-lg font-semibold">No matching material batches found</p>
+          <p className="text-sm mt-1">Try adjusting your search query or date range filters</p>
+          <button
+            onClick={() => {
+              setSearchQuery('');
+              setStartDate('');
+              setEndDate('');
+            }}
+            className="mt-4 text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-1.5 px-4 rounded-lg transition-colors cursor-pointer"
+          >
+            Reset Filters
+          </button>
         </div>
       ) : (
         <div className="rounded-xl overflow-hidden shadow-md bg-white dark:bg-gray-800 border border-slate-200 dark:border-[#2A3B4C]/30 p-4">
@@ -295,7 +414,7 @@ export default function MaterialBatchesPage() {
                 </tr>
               </thead>
               <tbody>
-                {flatRows.map(b => {
+                {filteredFlatRows.map(b => {
                   const hasIssues = b.issues && b.issues.length > 0;
                   const isExpanded = !!expandedBatchIds[b._id || ''];
 
