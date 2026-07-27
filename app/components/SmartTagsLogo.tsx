@@ -1,7 +1,8 @@
+// app/components/SmartTagsLogo.tsx
 'use client';
 
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-
 import { BRAND_LOGOS, type BrandLogoVariant } from '@/lib/brandLogos';
 import { cn } from '@/lib/utils';
 
@@ -13,7 +14,6 @@ type Props = {
   height?: number;
   priority?: boolean;
   link?: boolean;
-  /** When false, size is controlled only via className / imageClassName (e.g. hero GIF). */
   fixedHeight?: boolean;
 };
 
@@ -27,10 +27,30 @@ export default function SmartTagsLogo({
   link = true,
   fixedHeight = true,
 }: Props) {
+  const [logoSrc, setLogoSrc] = useState<string>('');
+
+  useEffect(() => {
+    // Fetch custom logo from company settings if exists
+    const fetchLogo = async () => {
+      try {
+        const res = await fetch('/api/company-settings');
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.logo) {
+            setLogoSrc(data.logo);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching dynamic company logo:', err);
+      }
+    };
+    fetchLogo();
+  }, []);
+
   const image = (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={BRAND_LOGOS[variant]}
+      src={logoSrc || BRAND_LOGOS[variant]}
       alt="SmartTags"
       height={fixedHeight ? height : undefined}
       decoding="async"

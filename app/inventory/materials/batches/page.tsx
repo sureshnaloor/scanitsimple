@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { ArrowUpDown, ChevronDown, ChevronRight, AlertCircle } from 'lucide-react';
+import { ArrowUpDown, ChevronDown, ChevronRight, AlertCircle, Printer } from 'lucide-react';
 import MasterDataPageShell from '@/app/components/MasterDataPageShell';
 import { useThemeSurfaces } from '@/lib/themePageStyles';
 import { fap } from '@/lib/fixedAssetPageDesign';
@@ -221,14 +221,27 @@ export default function MaterialBatchesPage() {
         return;
       }
 
+      const responseData = await res.json();
       show({ title: 'Success', description: 'Material issue successfully recorded', variant: 'success' });
       setActiveIssueBatch(null);
       fetchInitialData();
+
+      // Offer printing immediately based on whether it is a transfer or consumption
+      const hasDest = Boolean(issueData.destinationStorageLocationId);
+      const printType = hasDest ? 'gp' : 'gi';
+      const confirmPrint = confirm(`Issue recorded. Would you like to print the ${hasDest ? 'Gate Pass' : 'Goods Issue Slip'} now?`);
+      if (confirmPrint && responseData._id) {
+        handlePrint(responseData._id, printType);
+      }
     } catch {
       show({ title: 'Error', description: 'Failed to process material issue', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePrint = (txId: string, docType: 'grn' | 'gi' | 'gp') => {
+    window.open(`/api/material-documents?id=${txId}&docType=${docType}`, '_blank');
   };
 
   return (
@@ -340,6 +353,13 @@ export default function MaterialBatchesPage() {
                             Issue
                           </button>
                           <button
+                            onClick={() => handlePrint(b.transactionId, 'grn')}
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-1 px-3 rounded text-xs transition-colors cursor-pointer inline-flex items-center gap-1"
+                            title="Print Goods Receipt Document"
+                          >
+                            <Printer className="h-3 w-3" /> Print GRN
+                          </button>
+                          <button
                             onClick={() => setActiveQRBatchId(b._id || '')}
                             className="bg-green-600 hover:bg-green-700 text-white font-medium py-1 px-3 rounded text-xs transition-colors cursor-pointer"
                           >
@@ -411,6 +431,13 @@ export default function MaterialBatchesPage() {
                                             }`}
                                           >
                                             Issue
+                                          </button>
+                                          <button
+                                            onClick={() => handlePrint(child.transactionId, 'grn')}
+                                            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-1 px-3 rounded text-xs transition-colors cursor-pointer inline-flex items-center gap-1"
+                                            title="Print Goods Receipt Document"
+                                          >
+                                            <Printer className="h-3 w-3" /> Print GRN
                                           </button>
                                           <button
                                             onClick={() => setActiveQRBatchId(child._id || '')}

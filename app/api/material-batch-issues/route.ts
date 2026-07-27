@@ -89,6 +89,7 @@ export async function POST(req: Request) {
       transportMode: String(transportMode || 'by hand').trim(),
       drawingNumber: String(drawingNumber || '').trim(),
       usageLocation: String(usageLocation || '').trim(),
+      destinationStorageLocationId: destinationStorageLocationId ? String(destinationStorageLocationId) : '',
       remarks: String(remarks || '').trim(),
     };
     const issueResult = await db.collection(COLLECTION).insertOne(doc);

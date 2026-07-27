@@ -102,6 +102,19 @@ export function fieldKeyFromLabel(label: string): string {
  * Returns option name strings.
  */
 export async function fetchMasterOptions(source: string): Promise<string[]> {
+  if (source.startsWith('custom-')) {
+    try {
+      const baseUrl = typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+      const res = await fetch(`${baseUrl}/api/custom-masters?key=${source}`);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data.values) ? data.values : [];
+    } catch (err) {
+      console.error('Failed to fetch custom master options:', err);
+      return [];
+    }
+  }
+
   const def = MASTER_SOURCES.find((s) => s.value === source);
   if (!def) return [];
   try {

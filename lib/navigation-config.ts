@@ -206,6 +206,7 @@ export const subLinksMap: Record<NavigationSection, SidebarSubLink[]> = {
     { name: 'Projects', href: '/admin/projects', icon: CubeIcon },
     { name: 'Locations', href: '/admin/locations', icon: BuildingOfficeIcon },
     { name: 'Custom Fields', href: '/admin/custom-fields', icon: AdjustmentsHorizontalIcon },
+    { name: 'Logo & Company Details', href: '/admin/company-settings', icon: BuildingLibraryIcon },
   ]),
 };
 

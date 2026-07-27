@@ -69,7 +69,9 @@ export async function PUT(
 
     if (body?.masterSource !== undefined || effectiveInputType === 'master-select') {
       const masterSource = String(body?.masterSource ?? '').trim();
-      if (!MASTER_SOURCE_VALUES.has(masterSource)) {
+      const isValidSystemSource = MASTER_SOURCE_VALUES.has(masterSource);
+      const isValidCustomSource = masterSource.startsWith('custom-');
+      if (!isValidSystemSource && !isValidCustomSource) {
         return apiJson({ error: 'A valid master data source is required for dropdown fields' }, { status: 400 });
       }
       updates.masterSource = masterSource;

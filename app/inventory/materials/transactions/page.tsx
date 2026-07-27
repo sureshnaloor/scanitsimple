@@ -7,7 +7,7 @@ import { fap } from '@/lib/fixedAssetPageDesign';
 import { useToast } from '@/components/ui/toaster';
 import MaterialTransactionForm from '@/components/MaterialTransactionForm';
 import MasterDataPageShell from '@/app/components/MasterDataPageShell';
-import { ArrowUpDown, AlertCircle, PlusCircle, MinusCircle } from 'lucide-react';
+import { ArrowUpDown, PlusCircle, MinusCircle, Printer } from 'lucide-react';
 import type { Material, MaterialTransaction, StorageLocation } from '@/types/material';
 
 interface UnifiedTransaction {
@@ -24,6 +24,7 @@ interface UnifiedTransaction {
   storageDetails: string;
   date: Date;
   remarks: string;
+  isTransfer?: boolean;
   rawDoc: any;
 }
 
@@ -117,6 +118,7 @@ export default function MaterialTransactionsPage() {
         storageDetails: `Issued to: ${issue.usageLocation || 'Site'} | Issued by: ${issue.issuedBy.split(' - ')[1] || issue.issuedBy} | Received by: ${issue.receivedBy.split(' - ')[1] || issue.receivedBy} | Mode: ${issue.transportMode}`,
         date: new Date(issue.issueDate),
         remarks: issue.remarks || '',
+        isTransfer: Boolean(issue.destinationStorageLocationId),
         rawDoc: issue
       });
     });
@@ -192,6 +194,10 @@ export default function MaterialTransactionsPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePrint = (id: string, docType: 'grn' | 'gi' | 'gp') => {
+    window.open(`/api/material-documents?id=${id}&docType=${docType}`, '_blank');
   };
 
   return (
@@ -297,11 +303,26 @@ export default function MaterialTransactionsPage() {
                           <td className="p-3 space-x-2 whitespace-nowrap">
                             {row.type === 'Receipt' ? (
                               <>
+                                <button
+                                  onClick={() => handlePrint(row.id, 'grn')}
+                                  className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-1 px-3 rounded text-xs transition-colors cursor-pointer inline-flex items-center gap-1"
+                                >
+                                  <Printer className="h-3 w-3" /> Print GRN
+                                </button>
                                 <button onClick={() => handleEdit(row.rawDoc)} className={fap.btnSecondary}>Edit</button>
                                 <button onClick={() => handleDelete(row.id, 'Receipt')} className={fap.btnSecondary}>Delete</button>
                               </>
                             ) : (
-                              <span className="text-xs text-slate-400 italic" title="Delete from corresponding batch issue history">Locked</span>
+                              <button
+                                onClick={() => handlePrint(row.id, row.isTransfer ? 'gp' : 'gi')}
+                                className={`${
+                                  row.isTransfer
+                                    ? 'bg-purple-600 hover:bg-purple-700'
+                                    : 'bg-amber-600 hover:bg-amber-700'
+                                } text-white font-medium py-1 px-3 rounded text-xs transition-colors cursor-pointer inline-flex items-center gap-1`}
+                              >
+                                <Printer className="h-3 w-3" /> {row.isTransfer ? 'Print Gate Pass' : 'Print Goods Issue'}
+                              </button>
                             )}
                           </td>
                         </tr>

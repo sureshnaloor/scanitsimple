@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
+import { Printer } from 'lucide-react';
 
 interface MaterialBatchQRModalProps {
   batchId: string;
@@ -56,6 +57,7 @@ interface IssueDetail {
   transportMode?: string;
   drawingNumber?: string;
   usageLocation?: string;
+  destinationStorageLocationId?: string;
   remarks?: string;
 }
 
@@ -137,6 +139,10 @@ export default function MaterialBatchQRModal({ batchId, onClose }: MaterialBatch
     url: qrUrl,
   });
 
+  const handlePrint = (id: string, docType: 'grn' | 'gi' | 'gp') => {
+    window.open(`/api/material-documents?id=${id}&docType=${docType}`, '_blank');
+  };
+
   return (
     <div
       className="fixed inset-0 bg-black/45 flex items-center justify-center z-50 overflow-y-auto py-8"
@@ -185,16 +191,24 @@ export default function MaterialBatchQRModal({ batchId, onClose }: MaterialBatch
               </p>
             </div>
 
-            {/* Quantities Status */}
+            {/* Quantities Status & GRN Print */}
             {batch && (
-              <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 dark:bg-slate-900/30 rounded-lg border border-slate-100 dark:border-slate-800 text-sm">
-                <div className="text-center border-r border-slate-200 dark:border-slate-800">
-                  <div className="text-gray-400 text-xs font-semibold uppercase tracking-wider">Initial Batch Quantity</div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-gray-100 font-mono mt-1">{batch.initialQuantity}</div>
+              <div className="grid grid-cols-3 gap-4 p-4 bg-slate-50 dark:bg-slate-900/30 rounded-lg border border-slate-100 dark:border-slate-800 text-sm items-center">
+                <div className="text-center border-r border-slate-200 dark:border-slate-850">
+                  <div className="text-gray-400 text-[10px] font-semibold uppercase tracking-wider">Initial Quantity</div>
+                  <div className="text-xl font-bold text-gray-900 dark:text-gray-100 font-mono mt-1">{batch.initialQuantity}</div>
                 </div>
-                <div className="text-center">
-                  <div className="text-gray-400 text-xs font-semibold uppercase tracking-wider">Current Available Quantity</div>
-                  <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 font-mono mt-1">{batch.currentQuantity}</div>
+                <div className="text-center border-r border-slate-200 dark:border-slate-850">
+                  <div className="text-gray-400 text-[10px] font-semibold uppercase tracking-wider">Available Quantity</div>
+                  <div className="text-xl font-bold text-blue-600 dark:text-blue-400 font-mono mt-1">{batch.currentQuantity}</div>
+                </div>
+                <div className="text-center flex justify-center">
+                  <button
+                    onClick={() => handlePrint(batch.transactionId, 'grn')}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-1.5 px-3 rounded text-xs transition-colors cursor-pointer flex items-center gap-1"
+                  >
+                    <Printer className="h-3 w-3" /> Print GRN
+                  </button>
                 </div>
               </div>
             )}
@@ -291,22 +305,32 @@ export default function MaterialBatchQRModal({ batchId, onClose }: MaterialBatch
                         <th className="p-2 text-left">Transport</th>
                         <th className="p-2 text-left">Drawing #</th>
                         <th className="p-2 text-left">Location / Room</th>
-                        <th className="p-2 text-left">Remarks</th>
+                        <th className="p-2 text-left">Print</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {issueHistory.map(issue => (
-                        <tr key={issue._id} className="border-b border-gray-100 dark:border-gray-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-900/50">
-                          <td className="p-2 whitespace-nowrap">{issue.issueDate ? new Date(issue.issueDate).toLocaleDateString() : '—'}</td>
-                          <td className="p-2 font-semibold text-red-600 dark:text-red-400 font-mono">{issue.quantity}</td>
-                          <td className="p-2 truncate max-w-[120px]" title={issue.issuedBy}>{issue.issuedBy}</td>
-                          <td className="p-2 truncate max-w-[120px]" title={issue.receivedBy}>{issue.receivedBy}</td>
-                          <td className="p-2">{issue.transportMode}</td>
-                          <td className="p-2 font-mono">{issue.drawingNumber || '—'}</td>
-                          <td className="p-2">{issue.usageLocation || '—'}</td>
-                          <td className="p-2 italic text-gray-400 max-w-[120px] truncate" title={issue.remarks}>{issue.remarks || '—'}</td>
-                        </tr>
-                      ))}
+                      {issueHistory.map(issue => {
+                        const isTransfer = Boolean(issue.destinationStorageLocationId);
+                        return (
+                          <tr key={issue._id} className="border-b border-gray-100 dark:border-gray-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-900/50">
+                            <td className="p-2 whitespace-nowrap">{issue.issueDate ? new Date(issue.issueDate).toLocaleDateString() : '—'}</td>
+                            <td className="p-2 font-semibold text-red-600 dark:text-red-400 font-mono">{issue.quantity}</td>
+                            <td className="p-2 truncate max-w-[120px]" title={issue.issuedBy}>{issue.issuedBy}</td>
+                            <td className="p-2 truncate max-w-[120px]" title={issue.receivedBy}>{issue.receivedBy}</td>
+                            <td className="p-2">{issue.transportMode}</td>
+                            <td className="p-2 font-mono">{issue.drawingNumber || '—'}</td>
+                            <td className="p-2">{issue.usageLocation || '—'}</td>
+                            <td className="p-2">
+                              <button
+                                onClick={() => handlePrint(issue._id || '', isTransfer ? 'gp' : 'gi')}
+                                className="text-blue-600 hover:text-blue-800 font-semibold text-xs cursor-pointer flex items-center gap-0.5"
+                              >
+                                <Printer className="h-3.5 w-3.5" />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
