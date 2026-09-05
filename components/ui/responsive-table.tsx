@@ -20,6 +20,7 @@ interface ResponsiveTableProps {
   onSort?: (field: any) => void;
   className?: string;
   variant?: 'default' | 'glassmorphic' | 'light';
+  enhancedRows?: boolean;
 }
 
 const ResponsiveTable: React.FC<ResponsiveTableProps> = ({
@@ -29,7 +30,8 @@ const ResponsiveTable: React.FC<ResponsiveTableProps> = ({
   sortOrder,
   onSort,
   className,
-  variant = 'default'
+  variant = 'default',
+  enhancedRows = false
 }) => {
   const isGlassmorphic = variant === 'glassmorphic';
   const isLight = variant === 'light';
@@ -111,9 +113,11 @@ const ResponsiveTable: React.FC<ResponsiveTableProps> = ({
                   key={index}
                   className={cn(
                     "border-b transition-all duration-200 data-[state=selected]:bg-muted",
+                    enhancedRows && "hover:-translate-y-0.5 hover:shadow-md",
                     isGlassmorphic
                       ? cn(
                           "border-white/5 hover:bg-white/10 hover:backdrop-blur-sm",
+                          enhancedRows && "shadow-sm hover:shadow-white/10",
                           index % 2 === 0 
                             ? "bg-white/5 backdrop-blur-sm" 
                             : "bg-white/10 backdrop-blur-sm"
@@ -121,12 +125,14 @@ const ResponsiveTable: React.FC<ResponsiveTableProps> = ({
                       : isLight
                       ? cn(
                           "hover:bg-blue-50/80 border-blue-100",
+                          enhancedRows && "shadow-sm hover:shadow-blue-200/60",
                           index % 2 === 0 
                             ? "bg-white" 
                             : "bg-blue-50/30"
                         )
                       : cn(
                           "hover:bg-slate-100/80 dark:hover:bg-slate-700/50",
+                          enhancedRows && "shadow-sm hover:shadow-slate-900/40 dark:hover:shadow-black/40",
                           index % 2 === 0 
                             ? "bg-white dark:bg-slate-900" 
                             : "bg-slate-50/30 dark:bg-slate-800/30"
@@ -260,9 +266,11 @@ const ResponsiveTable: React.FC<ResponsiveTableProps> = ({
             key={index}
             className={cn(
               "border rounded-lg p-4 shadow-sm transition-all duration-200",
+              enhancedRows && "hover:-translate-y-1 hover:shadow-lg",
               isGlassmorphic
                 ? cn(
                     "border-white/20 rounded-2xl p-5 backdrop-blur-lg shadow-xl hover:bg-white/15 hover:shadow-2xl",
+                    enhancedRows && "hover:shadow-white/20",
                     index % 2 === 0 
                       ? "bg-white/10 backdrop-blur-lg" 
                       : "bg-white/15 backdrop-blur-lg"
@@ -270,12 +278,14 @@ const ResponsiveTable: React.FC<ResponsiveTableProps> = ({
                 : isLight
                 ? cn(
                     "hover:shadow-md",
+                    enhancedRows && "hover:shadow-blue-200/80",
                     index % 2 === 0 
                       ? "bg-white border-blue-200" 
                       : "bg-blue-50/50 border-blue-200/50"
                   )
                 : cn(
                     "hover:shadow-md",
+                    enhancedRows && "hover:shadow-slate-400/20 dark:hover:shadow-black/40",
                     index % 2 === 0 
                       ? "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700" 
                       : "bg-slate-50/50 dark:bg-slate-800/50 border-slate-200/50 dark:border-slate-700/50"

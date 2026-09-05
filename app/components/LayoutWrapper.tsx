@@ -53,6 +53,7 @@ export default function LayoutWrapper({ children }: LayoutWrapperProps) {
     pathname &&
     !isMarketingRoute(pathname) &&
     pathname !== '/dashboard' &&
+    !pathname.startsWith('/auth') &&
     !pathname.match(/^\/asset\/[^\/]+$/) &&
     !isFixedAssetAssetDetailPath(pathname) &&
     !pathname.match(/^\/tools\/[^\/]+$/);

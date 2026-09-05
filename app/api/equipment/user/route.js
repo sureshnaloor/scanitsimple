@@ -19,6 +19,22 @@ export async function POST(request) {
           }
         },
         {
+          // Keep only the latest custody record per asset when duplicates exist
+          $sort: {
+            assetnumber: 1,
+            custodyfrom: -1
+          }
+        },
+        {
+          $group: {
+            _id: '$assetnumber',
+            doc: { $first: '$$ROOT' }
+          }
+        },
+        {
+          $replaceRoot: { newRoot: '$doc' }
+        },
+        {
           // Lookup from equipmentandtools collection
           $lookup: {
             from: 'equipmentandtools',

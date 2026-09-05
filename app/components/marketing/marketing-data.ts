@@ -33,7 +33,7 @@ export const categories = [
   {
     title: 'Measuring Instruments',
     count: '1,200+',
-    image: '/images/medical-equipment.jpg',
+    image: '/images/measuring-instruments.jpg',
     subtypes: ['Calipers', 'Scales', 'Thermometers', 'Pressure Gauges', 'Flow Meters'],
   },
   {

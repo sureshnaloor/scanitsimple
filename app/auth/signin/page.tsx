@@ -4,7 +4,7 @@ import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, EyeOff, Loader2, CheckCircle2, ArrowRight, QrCode, BarChart3, Shield } from 'lucide-react';
+import { Eye, EyeOff, Loader2, CheckCircle2, ArrowRight, QrCode, BarChart3, Shield, Mail, Lock } from 'lucide-react';
 import { AnimatedMeshBackground } from '@/app/components/effects/animated-mesh-background';
 import { TextReveal } from '@/app/components/effects/text-reveal';
 import SmartTagsLogo from '@/app/components/SmartTagsLogo';
@@ -90,7 +90,7 @@ export default function SignInPage() {
       </div>
 
       {/* Right side — Form */}
-      <div className="flex w-full lg:w-1/2 items-center justify-center px-4 py-12 bg-primary-dark">
+      <div className="flex w-full lg:w-1/2 items-center justify-center px-4 py-12 bg-slate-50 dark:bg-primary-dark">
         <motion.div
           className="w-full max-w-md"
           initial={{ opacity: 0, x: 30 }}
@@ -102,9 +102,9 @@ export default function SignInPage() {
             <SmartTagsLogo variant="primary" height={48} className="mx-auto" />
           </div>
 
-          <div className="glass-card p-8 relative overflow-hidden">
-            <h1 className="text-2xl font-bold text-text-primary mb-2">Sign In</h1>
-            <p className="text-sm text-text-muted mb-6">Enter your credentials to access your account</p>
+          <div className="glass-card bg-white/95 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 shadow-xl rounded-2xl p-8 backdrop-blur-md relative overflow-hidden">
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">Sign In</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Enter your credentials to access your account</p>
 
             <AnimatePresence mode="wait">
               {error && (
@@ -121,50 +121,57 @@ export default function SignInPage() {
             </AnimatePresence>
 
             <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Email field with floating label */}
-              <div className="relative">
-                <input
-                  type="email"
-                  id="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="peer w-full rounded-lg border border-primary-light bg-primary-slate/50 px-4 py-3 text-text-primary outline-none transition-all focus:border-accent-teal focus:ring-2 focus:ring-accent-teal/20"
-                  placeholder=" "
-                  required
-                />
-                <label
-                  htmlFor="email"
-                  className="absolute left-4 top-3 text-sm text-text-muted transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-sm peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-accent-teal peer-focus:bg-primary-dark peer-focus:px-1 peer-not-placeholder-shown:-top-2.5 peer-not-placeholder-shown:text-xs peer-not-placeholder-shown:bg-primary-dark peer-not-placeholder-shown:px-1"
-                >
+              {/* Email field */}
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                   Email address
                 </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                    <Mail className="size-5" />
+                  </div>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/90 pl-11 pr-4 py-3 text-slate-900 dark:text-slate-100 text-sm placeholder:text-slate-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 outline-none transition-all shadow-sm [&:-webkit-autofill]:shadow-[0_0_0_1000px_#ffffff_inset] dark:[&:-webkit-autofill]:shadow-[0_0_0_1000px_#1e293b_inset] [&:-webkit-autofill]:[text-fill-color:#0f172a] dark:[&:-webkit-autofill]:[text-fill-color:#f8fafc]"
+                    placeholder="name@company.com"
+                    required
+                  />
+                </div>
               </div>
 
-              {/* Password field with floating label + toggle */}
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  id="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="peer w-full rounded-lg border border-primary-light bg-primary-slate/50 px-4 py-3 pr-12 text-text-primary outline-none transition-all focus:border-accent-teal focus:ring-2 focus:ring-accent-teal/20"
-                  placeholder=" "
-                  required
-                />
-                <label
-                  htmlFor="password"
-                  className="absolute left-4 top-3 text-sm text-text-muted transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-sm peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-accent-teal peer-focus:bg-primary-dark peer-focus:px-1 peer-not-placeholder-shown:-top-2.5 peer-not-placeholder-shown:text-xs peer-not-placeholder-shown:bg-primary-dark peer-not-placeholder-shown:px-1"
-                >
+              {/* Password field */}
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                   Password
                 </label>
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors"
-                  tabIndex={-1}
-                >
-                  {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
-                </button>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                    <Lock className="size-5" />
+                  </div>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    id="password"
+                    name="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/90 pl-11 pr-11 py-3 text-slate-900 dark:text-slate-100 text-sm placeholder:text-slate-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 outline-none transition-all shadow-sm [&:-webkit-autofill]:shadow-[0_0_0_1000px_#ffffff_inset] dark:[&:-webkit-autofill]:shadow-[0_0_0_1000px_#1e293b_inset] [&:-webkit-autofill]:[text-fill-color:#0f172a] dark:[&:-webkit-autofill]:[text-fill-color:#f8fafc]"
+                    placeholder="••••••••"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
+                  </button>
+                </div>
               </div>
 
               <motion.button

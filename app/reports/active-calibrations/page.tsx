@@ -310,6 +310,16 @@ export default function ActiveCalibrationsReport() {
         }
     };
 
+    const getManufacturerBadgeStyles = () => {
+        if (theme === 'light') {
+            return 'bg-blue-100 text-blue-700 border border-blue-300 shadow-sm';
+        } else if (theme === 'glassmorphic') {
+            return 'bg-teal-500/20 text-teal-300 border border-teal-400/30 shadow-sm shadow-teal-400/10';
+        } else { // dark
+            return 'bg-teal-900/40 text-teal-400 border border-teal-700/50 shadow-sm shadow-black/30';
+        }
+    };
+
     const formattedData = calibrations.map(item => ({
         ...item,
         assetnumber: (
@@ -321,7 +331,7 @@ export default function ActiveCalibrationsReport() {
             </Link>
         ),
         assetmanufacturer: (
-            <span className={`${theme === 'light' ? 'text-blue-700' : theme === 'glassmorphic' ? 'text-teal-300' : 'text-teal-400'} font-medium`}>
+            <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${getManufacturerBadgeStyles()}`}>
                 {item.assetmanufacturer}
             </span>
         ),
@@ -394,6 +404,7 @@ export default function ActiveCalibrationsReport() {
                                 sortOrder={sortOrder}
                                 onSort={toggleSort}
                                 variant={getTableVariant()}
+                                enhancedRows={true}
                             />
                         </div>
                     </div>

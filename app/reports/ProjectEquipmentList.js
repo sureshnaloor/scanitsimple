@@ -388,11 +388,12 @@ const ProjectEquipmentList = () => {
                     }
                   }}
                   onFocus={() => setIsDropdownOpen(true)}
-                  placeholder="Search for a project..."
-                  className={`w-full px-4 py-3 ${backgroundStyles.inputBg} rounded-xl focus:outline-none focus:ring-2 transition-all`}
+                  placeholder="Search or select a project..."
+                  className={`w-full px-4 py-3 pr-12 ${backgroundStyles.inputBg} rounded-xl focus:outline-none focus:ring-2 transition-all`}
                 />
-                {selectedProject && (
+                {selectedProject ? (
                   <button
+                    type="button"
                     onClick={() => {
                       setSelectedProject(null);
                       setSearchQuery('');
@@ -403,22 +404,43 @@ const ProjectEquipmentList = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setIsDropdownOpen(prev => !prev)}
+                    className={`absolute right-3 top-1/2 -translate-y-1/2 ${theme === 'light' ? 'text-gray-400 hover:text-gray-600' : 'text-slate-400 hover:text-white'} transition-colors`}
+                  >
+                    <svg
+                      className={`w-5 h-5 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
                 )}
               </div>
-              
+
               {/* Dropdown */}
-              {isDropdownOpen && filteredProjects.length > 0 && (
-                <div className={`absolute z-50 w-full mt-2 ${backgroundStyles.dropdownBg} rounded-xl shadow-2xl max-h-64 overflow-y-auto`}>
-                  {filteredProjects.map((project) => (
-                    <button
-                      key={project._id || `${project.wbs}-${project.projectname}`}
-                      onClick={() => handleProjectChange(project)}
-                      className={`w-full px-4 py-3 text-left ${backgroundStyles.dropdownItem} transition-colors border-b ${backgroundStyles.tableRowBorder} last:border-b-0`}
-                    >
-                      <div className="font-medium">{project.projectname}</div>
-                      <div className={`text-sm ${backgroundStyles.dropdownItemText}`}>WBS: {project.wbs}</div>
-                    </button>
-                  ))}
+              {isDropdownOpen && (
+                <div className={`absolute z-50 w-full mt-2 ${backgroundStyles.dropdownBg} rounded-xl shadow-2xl max-h-80 overflow-y-auto`}>
+                  {filteredProjects.length > 0 ? (
+                    filteredProjects.map((project) => (
+                      <button
+                        key={project._id || `${project.wbs}-${project.projectname}`}
+                        onClick={() => handleProjectChange(project)}
+                        className={`w-full px-4 py-3 text-left ${backgroundStyles.dropdownItem} transition-colors border-b ${backgroundStyles.tableRowBorder} last:border-b-0`}
+                      >
+                        <div className="font-medium">{project.projectname}</div>
+                        <div className={`text-sm ${backgroundStyles.dropdownItemText}`}>WBS: {project.wbs}</div>
+                      </button>
+                    ))
+                  ) : (
+                    <div className={`px-4 py-3 text-center ${backgroundStyles.dropdownItemText}`}>
+                      No projects found
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -499,7 +521,7 @@ const ProjectEquipmentList = () => {
                     {equipmentList.map((item, index) => (
                       <tr
                         key={item._id || index}
-                        className={`border-b ${backgroundStyles.tableRowBorder} ${backgroundStyles.tableRowHover} transition-colors`}
+                        className={`border-b ${backgroundStyles.tableRowBorder} ${backgroundStyles.tableRowHover} transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${theme === 'glassmorphic' ? 'hover:shadow-white/10' : theme === 'light' ? 'hover:shadow-blue-200/60' : 'hover:shadow-black/40'}`}
                       >
                         <td className="px-6 py-4">
                           <Link
