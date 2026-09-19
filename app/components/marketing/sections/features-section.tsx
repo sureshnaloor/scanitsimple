@@ -27,8 +27,9 @@ const iconMap: Record<string, LucideIcon> = {
 
 export function FeaturesSection() {
   return (
-    <section className="bg-primary-navy py-24">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section className="relative overflow-hidden bg-primary-dark py-24">
+      <div className="grid-pattern absolute inset-0 opacity-50" />
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
           label="Powerful Features"
           headline="Built for Enterprise Scale"
@@ -58,7 +59,7 @@ export function FeaturesSection() {
                         </motion.div>
                       )}
                     </motion.div>
-                    <h3 className="text-h5 mb-3 text-text-primary">{feature.title}</h3>
+                    <h3 className="text-h4 mb-3 text-text-primary">{feature.title}</h3>
                     <p className="text-body-sm-ds">{feature.description}</p>
                   </Card>
                 </TiltCard>

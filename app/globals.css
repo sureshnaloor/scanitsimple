@@ -409,6 +409,17 @@ body {
     animation: orb-drift-3 18s ease-in-out infinite;
   }
 
+  /* Stronger orb presence on light backgrounds (light theme) */
+  :root .glow-orb-teal {
+    background: radial-gradient(circle, rgba(0,150,200,0.30) 0%, transparent 70%);
+  }
+  :root .glow-orb-orange {
+    background: radial-gradient(circle, rgba(255,107,53,0.24) 0%, transparent 70%);
+  }
+  :root .glow-orb-purple {
+    background: radial-gradient(circle, rgba(124,58,237,0.20) 0%, transparent 70%);
+  }
+
   @keyframes orb-drift-1 {
     0%, 100% { transform: translate(-20%, -10%) scale(1); }
     33% { transform: translate(10%, 15%) scale(1.15); }

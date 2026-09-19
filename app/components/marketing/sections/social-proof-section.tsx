@@ -8,7 +8,7 @@ import { testimonials, clientLogos } from '../marketing-data';
 
 export function SocialProofSection() {
   return (
-    <section className="bg-primary-dark py-24 overflow-hidden">
+    <section className="bg-primary-navy py-24 overflow-hidden">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
           label="Trusted Worldwide"

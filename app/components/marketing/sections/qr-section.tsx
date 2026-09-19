@@ -31,9 +31,18 @@ export function QrSection() {
     <section
       id="demo"
       ref={sectionRef}
-      className="relative overflow-hidden bg-gradient-to-b from-primary-dark to-primary-navy py-24"
+      className="relative overflow-hidden bg-primary-navy py-24"
     >
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      {/* decorative accent glows */}
+      <div
+        className="pointer-events-none absolute -left-32 top-1/4 size-[420px] rounded-full blur-[120px]"
+        style={{ background: 'radial-gradient(circle, var(--color-accent-teal-glow) 0%, transparent 70%)' }}
+      />
+      <div
+        className="pointer-events-none absolute -right-32 bottom-1/4 size-[380px] rounded-full blur-[120px]"
+        style={{ background: 'radial-gradient(circle, var(--color-accent-orange-glow) 0%, transparent 70%)' }}
+      />
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 items-center gap-16 lg:grid-cols-2">
           <FadeUp>
             <SectionHeader
