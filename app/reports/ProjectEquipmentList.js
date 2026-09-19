@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import * as XLSX from 'xlsx';
+import { jsPDF } from 'jspdf';
 import { useAppTheme } from '@/app/contexts/ThemeContext';
 
 const ProjectEquipmentList = () => {
@@ -224,6 +226,7 @@ const ProjectEquipmentList = () => {
           linkColor: 'text-teal-400 hover:text-teal-300',
           buttonUndertaking: 'bg-green-500/20 backdrop-blur-md border border-green-400/30 text-green-300 hover:bg-green-500/30 hover:border-green-400/50',
           buttonExport: 'bg-teal-500/20 backdrop-blur-md border border-teal-400/30 text-teal-300 hover:bg-teal-500/30 hover:border-teal-400/50',
+          buttonPdf: 'bg-rose-500/20 backdrop-blur-md border border-rose-400/30 text-rose-300 hover:bg-rose-500/30 hover:border-rose-400/50',
           tableBorder: 'border-white/10'
         };
       case 'light':
@@ -252,6 +255,7 @@ const ProjectEquipmentList = () => {
           linkColor: 'text-blue-600 hover:text-blue-700',
           buttonUndertaking: 'bg-green-100 border-2 border-green-300 text-green-700 hover:bg-green-200 hover:border-green-400',
           buttonExport: 'bg-blue-100 border-2 border-blue-300 text-blue-700 hover:bg-blue-200 hover:border-blue-400',
+          buttonPdf: 'bg-rose-100 border-2 border-rose-300 text-rose-700 hover:bg-rose-200 hover:border-rose-400',
           tableBorder: 'border-blue-200'
         };
       default: // dark theme
@@ -280,6 +284,7 @@ const ProjectEquipmentList = () => {
           linkColor: 'text-teal-400 hover:text-teal-300',
           buttonUndertaking: 'bg-green-900/40 border border-green-700/50 text-green-300 hover:bg-green-900/60 hover:border-green-600',
           buttonExport: 'bg-teal-900/40 border border-teal-700/50 text-teal-300 hover:bg-teal-900/60 hover:border-teal-600',
+          buttonPdf: 'bg-rose-900/40 border border-rose-700/50 text-rose-300 hover:bg-rose-900/60 hover:border-rose-600',
           tableBorder: 'border-slate-700'
         };
     }
@@ -287,29 +292,149 @@ const ProjectEquipmentList = () => {
 
   const backgroundStyles = getBackgroundStyles();
 
-  // Handle export to Excel
+  // Handle export to Excel (.xlsx)
   const handleExport = () => {
-    if (equipmentList.length === 0) return;
+    if (!equipmentList || equipmentList.length === 0) return;
 
-    const csvContent = [
-      ['Asset Number', 'Employee Number', 'Employee Name', 'Custody From'],
-      ...equipmentList.map(item => [
-        item.assetnumber,
-        item.employeenumber,
-        item.employeename,
-        new Date(item.custodyfrom).toLocaleDateString()
-      ])
+    const headers = [
+      'Sl No',
+      'Asset Number',
+      'Asset Description',
+      'Employee Number',
+      'Employee Name',
+      'Custody From'
     ];
 
-    const csv = csvContent.map(row => row.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `project_equipment_${selectedProject.projectname}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const rows = equipmentList.map((item, index) => [
+      index + 1,
+      item.assetnumber || '',
+      item.assetdescription || '',
+      item.employeenumber || '',
+      item.employeename || '',
+      item.custodyfrom ? new Date(item.custodyfrom).toLocaleDateString('en-GB') : ''
+    ]);
+
+    const projTitle = selectedProject ? `${selectedProject.wbs} - ${selectedProject.projectname}` : 'Project Equipment';
+    const worksheet = XLSX.utils.aoa_to_sheet([
+      [`PROJECT EQUIPMENT REPORT: ${projTitle}`],
+      [`Generated: ${new Date().toLocaleString()} | Total Items: ${equipmentList.length}`],
+      [],
+      headers,
+      ...rows
+    ]);
+
+    worksheet['!cols'] = [
+      { wch: 8 },
+      { wch: 18 },
+      { wch: 36 },
+      { wch: 18 },
+      { wch: 28 },
+      { wch: 16 }
+    ];
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Project Equipment');
+
+    const safeName = (selectedProject?.projectname || 'project').replace(/[^a-zA-Z0-9_-]/g, '_');
+    XLSX.writeFile(workbook, `Project_Equipment_${safeName}.xlsx`);
+  };
+
+  // Handle export to PDF
+  const handleExportPDF = () => {
+    if (!equipmentList || equipmentList.length === 0) return;
+
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 14;
+
+    doc.setFillColor(15, 23, 42);
+    doc.rect(margin, 10, pageWidth - margin * 2, 20, 'F');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.setTextColor(255, 255, 255);
+    doc.text('PROJECT EQUIPMENT REPORT', margin + 5, 18);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(148, 163, 184);
+    const projName = selectedProject ? `${selectedProject.wbs} - ${selectedProject.projectname}` : '';
+    doc.text(`Project: ${projName} | Total Items: ${equipmentList.length}`, margin + 5, 25);
+
+    let y = 36;
+    const colWidths = [10, 26, 60, 24, 38, 24];
+    const headers = ['#', 'Asset #', 'Description', 'Emp #', 'Employee Name', 'Custody From'];
+
+    doc.setFillColor(30, 41, 59);
+    doc.rect(margin, y, pageWidth - margin * 2, 7, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(255, 255, 255);
+
+    let curX = margin;
+    headers.forEach((h, i) => {
+      doc.text(h, curX + 2, y + 5);
+      curX += colWidths[i];
+    });
+
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+
+    equipmentList.forEach((item, index) => {
+      if (y > pageHeight - 15) {
+        doc.addPage();
+        y = 14;
+        doc.setFillColor(30, 41, 59);
+        doc.rect(margin, y, pageWidth - margin * 2, 7, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.setTextColor(255, 255, 255);
+        let rx = margin;
+        headers.forEach((h, i) => {
+          doc.text(h, rx + 2, y + 5);
+          rx += colWidths[i];
+        });
+        y += 7;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.5);
+      }
+
+      if (index % 2 === 0) {
+        doc.setFillColor(248, 250, 252);
+        doc.rect(margin, y, pageWidth - margin * 2, 6, 'F');
+      }
+
+      doc.setTextColor(30, 41, 59);
+      let rx = margin;
+      const rowVals = [
+        String(index + 1),
+        String(item.assetnumber || ''),
+        String(item.assetdescription || '').substring(0, 34),
+        String(item.employeenumber || ''),
+        String(item.employeename || '').substring(0, 22),
+        item.custodyfrom ? new Date(item.custodyfrom).toLocaleDateString('en-GB') : ''
+      ];
+
+      rowVals.forEach((val, i) => {
+        doc.text(val, rx + 2, y + 4.2);
+        rx += colWidths[i];
+      });
+
+      y += 6;
+    });
+
+    const totalPages = doc.getNumberOfPages();
+    for (let p = 1; p <= totalPages; p++) {
+      doc.setPage(p);
+      doc.setFontSize(7);
+      doc.setTextColor(100, 116, 139);
+      doc.text(`Page ${p} of ${totalPages} | ScanItSimple`, pageWidth / 2, pageHeight - 6, { align: 'center' });
+    }
+
+    const safeName = (selectedProject?.projectname || 'project').replace(/[^a-zA-Z0-9_-]/g, '_');
+    doc.save(`Project_Equipment_${safeName}.pdf`);
   };
 
   const handleDownloadConsolidatedUndertaking = async () => {
@@ -499,7 +624,16 @@ const ProjectEquipmentList = () => {
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
-                      Export to Excel
+                      Export Excel (.xlsx)
+                    </button>
+                    <button
+                      onClick={handleExportPDF}
+                      className={`px-6 py-3 ${backgroundStyles.buttonPdf} rounded-xl font-semibold transition-all duration-300 flex items-center gap-2`}
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                      Export PDF (.pdf)
                     </button>
                   </div>
                 </div>

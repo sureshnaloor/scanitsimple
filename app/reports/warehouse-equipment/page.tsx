@@ -178,7 +178,8 @@ export default function WarehouseEquipmentReport() {
                     linkColor: 'text-teal-400 hover:text-teal-300',
                     errorBg: 'bg-red-500/20 backdrop-blur-lg border border-red-400/30',
                     errorText: 'text-red-300',
-                    actionButton: 'text-teal-400 hover:text-teal-300 hover:bg-white/10'
+                    actionButton: 'text-teal-400 hover:text-teal-300 hover:bg-white/10',
+                    buttonUndertaking: 'bg-green-500/20 backdrop-blur-md border border-green-400/30 text-green-300 hover:bg-green-500/30 hover:border-green-400/50'
                 };
             case 'light':
                 return {
@@ -197,7 +198,8 @@ export default function WarehouseEquipmentReport() {
                     linkColor: 'text-blue-600 hover:text-blue-700',
                     errorBg: 'bg-red-100 border-2 border-red-300 shadow-md',
                     errorText: 'text-red-700',
-                    actionButton: 'text-blue-600 hover:text-blue-700 hover:bg-blue-50'
+                    actionButton: 'text-blue-600 hover:text-blue-700 hover:bg-blue-50',
+                    buttonUndertaking: 'bg-green-100 border-2 border-green-300 text-green-700 hover:bg-green-200 hover:border-green-400'
                 };
             default: // dark theme
                 return {
@@ -216,12 +218,36 @@ export default function WarehouseEquipmentReport() {
                     linkColor: 'text-teal-400 hover:text-teal-300',
                     errorBg: 'bg-red-900/30 border border-red-700/50 shadow-lg',
                     errorText: 'text-red-300',
-                    actionButton: 'text-teal-400 hover:text-teal-300 hover:bg-slate-700/50'
+                    actionButton: 'text-teal-400 hover:text-teal-300 hover:bg-slate-700/50',
+                    buttonUndertaking: 'bg-green-900/40 border border-green-700/50 text-green-300 hover:bg-green-900/60 hover:border-green-600'
                 };
         }
     };
 
     const backgroundStyles = getBackgroundStyles();
+
+    const handleDownloadConsolidatedUndertaking = async (city: string) => {
+        try {
+            const response = await fetch(`/api/undertaking-letter-warehouse?city=${encodeURIComponent(city)}`);
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({}));
+                throw new Error(err.error || 'Failed to generate consolidated undertaking letter');
+            }
+            
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Consolidated_Warehouse_Undertaking_Letter_${city}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        } catch (error: any) {
+            console.error('Error downloading consolidated undertaking letter:', error);
+            alert(error.message || 'Failed to download consolidated undertaking letter. Please try again.');
+        }
+    };
 
     const handleDownloadUndertaking = async (assetNumber: string) => {
         try {
@@ -392,10 +418,26 @@ export default function WarehouseEquipmentReport() {
                         <p className={`${backgroundStyles.headerSubtitle} text-lg`}>
                             View all equipment currently stored in warehouses across different locations.
                         </p>
-                        <div className="mt-6 flex flex-wrap gap-4">
+                        <div className="mt-6 flex flex-wrap gap-4 items-center justify-between">
                             <div className={`${backgroundStyles.statBg} rounded-xl px-6 py-3`}>
                                 <div className={`text-2xl font-bold ${backgroundStyles.statValue}`}>{equipment.length}</div>
                                 <div className={`${backgroundStyles.statLabel} text-sm uppercase tracking-wider`}>Warehouse Items</div>
+                            </div>
+                            <div className="flex flex-wrap gap-3">
+                                <button
+                                    onClick={() => handleDownloadConsolidatedUndertaking('Dammam')}
+                                    className={`px-4 py-2.5 ${backgroundStyles.buttonUndertaking} rounded-xl font-semibold transition-all duration-300 flex items-center gap-2 text-sm`}
+                                >
+                                    <Download className="w-4 h-4" />
+                                    Dammam Undertaking (PDF)
+                                </button>
+                                <button
+                                    onClick={() => handleDownloadConsolidatedUndertaking('Jubail')}
+                                    className={`px-4 py-2.5 ${backgroundStyles.buttonUndertaking} rounded-xl font-semibold transition-all duration-300 flex items-center gap-2 text-sm`}
+                                >
+                                    <Download className="w-4 h-4" />
+                                    Jubail Undertaking (PDF)
+                                </button>
                             </div>
                         </div>
                     </div>

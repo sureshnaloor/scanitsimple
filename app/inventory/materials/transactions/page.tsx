@@ -7,7 +7,9 @@ import { fap } from '@/lib/fixedAssetPageDesign';
 import { useToast } from '@/components/ui/toaster';
 import MaterialTransactionForm from '@/components/MaterialTransactionForm';
 import MasterDataPageShell from '@/app/components/MasterDataPageShell';
-import { ArrowUpDown, PlusCircle, MinusCircle, Printer } from 'lucide-react';
+import { ArrowUpDown, PlusCircle, MinusCircle, Printer, FileSpreadsheet, FileText } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import { jsPDF } from 'jspdf';
 import type { Material, MaterialTransaction, StorageLocation } from '@/types/material';
 
 interface UnifiedTransaction {
@@ -176,6 +178,232 @@ export default function MaterialTransactionsPage() {
     });
   }, [unifiedLedger, searchQuery, startDate, endDate]);
 
+  const handleExportExcel = () => {
+    if (filteredLedger.length === 0) {
+      show({ title: 'No Data', description: 'No transaction records to export', variant: 'destructive' });
+      return;
+    }
+
+    try {
+      const headers = [
+        'Sl No',
+        'Type',
+        'Date',
+        'Material Code',
+        'Material Description',
+        'Batch Number',
+        'PO Number',
+        'Line Item',
+        'Cost Element',
+        'Quantity',
+        'Storage / Issue Details',
+        'Remarks'
+      ];
+
+      const rows = filteredLedger.map((tx, idx) => [
+        idx + 1,
+        tx.type,
+        tx.date ? tx.date.toLocaleDateString('en-GB') : '',
+        tx.materialCode,
+        tx.materialDescription,
+        tx.batchNumber,
+        tx.poNumber,
+        tx.poLineItem,
+        tx.costElement,
+        tx.qty,
+        tx.storageDetails,
+        tx.remarks
+      ]);
+
+      const worksheet = XLSX.utils.aoa_to_sheet([
+        ['MATERIAL TRANSACTIONS & LEDGER AUDIT REPORT'],
+        [`Generated: ${new Date().toLocaleString()} | Total Records: ${filteredLedger.length}`],
+        [`Filter - Search: ${searchQuery || 'All'} | Date: ${startDate || 'Start'} to ${endDate || 'End'}`],
+        [],
+        headers,
+        ...rows
+      ]);
+
+      worksheet['!cols'] = [
+        { wch: 8 },
+        { wch: 12 },
+        { wch: 14 },
+        { wch: 18 },
+        { wch: 30 },
+        { wch: 18 },
+        { wch: 16 },
+        { wch: 12 },
+        { wch: 16 },
+        { wch: 14 },
+        { wch: 40 },
+        { wch: 25 }
+      ];
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Material Transactions');
+
+      const dateStr = new Date().toISOString().split('T')[0];
+      XLSX.writeFile(workbook, `Material_Transactions_Report_${dateStr}.xlsx`);
+
+      show({
+        title: 'Export Succeeded',
+        description: `Exported ${filteredLedger.length} material transactions to Excel`,
+        variant: 'success'
+      });
+    } catch (err: any) {
+      console.error('Error exporting material transactions:', err);
+      show({ title: 'Export Failed', description: err.message || 'Failed to export Excel', variant: 'destructive' });
+    }
+  };
+
+  const handleExportPDF = () => {
+    if (filteredLedger.length === 0) {
+      show({ title: 'No Data', description: 'No transaction records to export', variant: 'destructive' });
+      return;
+    }
+
+    try {
+      const doc = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      let y = 14;
+
+      // Header Banner
+      doc.setFillColor(15, 23, 42); // Slate-900
+      doc.rect(10, y, pageWidth - 20, 22, 'F');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.setTextColor(255, 255, 255);
+      doc.text('MATERIAL TRANSACTIONS & STOCK LEDGER REPORT', 15, y + 8);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(148, 163, 184);
+      doc.text(`Search: ${searchQuery || 'All'} | Period: ${startDate || 'Earliest'} to ${endDate || 'Latest'}`, 15, y + 14);
+      doc.text(`Generated: ${new Date().toLocaleString()} | Total Transactions: ${filteredLedger.length}`, 15, y + 19);
+
+      y += 26;
+
+      const columns = [
+        { header: '#', width: 10, align: 'center' as const },
+        { header: 'Type', width: 18, align: 'left' as const },
+        { header: 'Date', width: 22, align: 'left' as const },
+        { header: 'Material Code', width: 26, align: 'left' as const },
+        { header: 'Description', width: 44, align: 'left' as const },
+        { header: 'Batch #', width: 24, align: 'left' as const },
+        { header: 'PO #', width: 24, align: 'left' as const },
+        { header: 'Qty', width: 16, align: 'center' as const },
+        { header: 'Storage / Issue Location', width: 54, align: 'left' as const },
+        { header: 'Remarks', width: 39, align: 'left' as const }
+      ];
+
+      const drawTableHeader = (curY: number) => {
+        doc.setFillColor(30, 41, 59);
+        doc.rect(10, curY, pageWidth - 20, 7, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.setTextColor(255, 255, 255);
+
+        let curX = 10;
+        columns.forEach((col) => {
+          if (col.align === 'center') {
+            doc.text(col.header, curX + col.width / 2, curY + 5, { align: 'center' });
+          } else {
+            doc.text(col.header, curX + 2, curY + 5);
+          }
+          curX += col.width;
+        });
+        return curY + 7;
+      };
+
+      y = drawTableHeader(y);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+
+      filteredLedger.forEach((row, index) => {
+        if (y > pageHeight - 15) {
+          doc.setFontSize(7);
+          doc.setTextColor(100, 116, 139);
+          doc.text(`Page ${doc.getNumberOfPages()}`, pageWidth / 2, pageHeight - 6, { align: 'center' });
+
+          doc.addPage();
+          y = 12;
+          y = drawTableHeader(y);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(7);
+        }
+
+        if (index % 2 === 0) {
+          doc.setFillColor(248, 250, 252);
+          doc.rect(10, y, pageWidth - 20, 6, 'F');
+        }
+
+        doc.setTextColor(30, 41, 59);
+        let curX = 10;
+
+        doc.text(String(index + 1), curX + columns[0].width / 2, y + 4.2, { align: 'center' });
+        curX += columns[0].width;
+
+        doc.text(row.type, curX + 2, y + 4.2);
+        curX += columns[1].width;
+
+        doc.text(row.date ? row.date.toLocaleDateString('en-GB') : '', curX + 2, y + 4.2);
+        curX += columns[2].width;
+
+        doc.text(row.materialCode.substring(0, 16), curX + 2, y + 4.2);
+        curX += columns[3].width;
+
+        doc.text(row.materialDescription.substring(0, 26), curX + 2, y + 4.2);
+        curX += columns[4].width;
+
+        doc.text(row.batchNumber.substring(0, 14), curX + 2, y + 4.2);
+        curX += columns[5].width;
+
+        doc.text(row.poNumber !== '—' ? row.poNumber.substring(0, 14) : '-', curX + 2, y + 4.2);
+        curX += columns[6].width;
+
+        const qtyStr = row.qty > 0 ? `+${row.qty}` : String(row.qty);
+        doc.text(qtyStr, curX + columns[7].width / 2, y + 4.2, { align: 'center' });
+        curX += columns[7].width;
+
+        doc.text(row.storageDetails.substring(0, 36), curX + 2, y + 4.2);
+        curX += columns[8].width;
+
+        doc.text(row.remarks.substring(0, 24), curX + 2, y + 4.2);
+
+        y += 6;
+      });
+
+      const totalPagesCount = doc.getNumberOfPages();
+      for (let p = 1; p <= totalPagesCount; p++) {
+        doc.setPage(p);
+        doc.setFontSize(7);
+        doc.setTextColor(100, 116, 139);
+        doc.text(`Page ${p} of ${totalPagesCount} | ScanItSimple Materials`, pageWidth / 2, pageHeight - 6, {
+          align: 'center'
+        });
+      }
+
+      const dateStr = new Date().toISOString().split('T')[0];
+      doc.save(`Material_Transactions_Report_${dateStr}.pdf`);
+
+      show({
+        title: 'PDF Export Complete',
+        description: `Exported ${filteredLedger.length} material transactions to PDF`,
+        variant: 'success'
+      });
+    } catch (err: any) {
+      console.error('Error generating PDF:', err);
+      show({ title: 'Export Failed', description: err.message || 'Failed to export PDF', variant: 'destructive' });
+    }
+  };
+
   const handleCreate = () => {
     setSelectedTransaction(null);
     setShowForm(true);
@@ -284,14 +512,34 @@ export default function MaterialTransactionsPage() {
         )}
       </div>
       
-      <div className="flex justify-between mb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <button onClick={handleCreate} className={fap.btnPrimary}>Record Receipt (PO)</button>
-        <button
-          onClick={() => setSortAsc(!sortAsc)}
-          className="flex items-center gap-1 hover:text-blue-500 font-semibold text-xs tracking-wider border border-slate-300 dark:border-slate-700 py-1.5 px-3 rounded-lg bg-white dark:bg-gray-800 transition-colors"
-        >
-          Sort Material Code {sortAsc ? '▲' : '▼'}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={handleExportExcel}
+            disabled={filteredLedger.length === 0}
+            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg border border-emerald-300 dark:border-emerald-700 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/60 transition-colors disabled:opacity-50 cursor-pointer shadow-sm"
+            title="Download Excel spreadsheet of filtered transactions"
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+            Export Excel (.xlsx)
+          </button>
+          <button
+            onClick={handleExportPDF}
+            disabled={filteredLedger.length === 0}
+            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg border border-rose-300 dark:border-rose-700 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/60 transition-colors disabled:opacity-50 cursor-pointer shadow-sm"
+            title="Download PDF report of filtered transactions"
+          >
+            <FileText className="w-4 h-4" />
+            Export PDF (.pdf)
+          </button>
+          <button
+            onClick={() => setSortAsc(!sortAsc)}
+            className="flex items-center gap-1 hover:text-blue-500 font-semibold text-xs tracking-wider border border-slate-300 dark:border-slate-700 py-2 px-3 rounded-lg bg-white dark:bg-gray-800 transition-colors"
+          >
+            Sort Material Code {sortAsc ? '▲' : '▼'}
+          </button>
+        </div>
       </div>
 
       {unifiedLedger.length === 0 ? (

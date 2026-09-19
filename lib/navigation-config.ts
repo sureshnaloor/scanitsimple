@@ -32,6 +32,8 @@ import {
   ArrowPathIcon,
   ListBulletIcon,
   AdjustmentsHorizontalIcon,
+  DocumentArrowDownIcon,
+  SparklesIcon,
 } from '@heroicons/react/24/outline';
 import type { ComponentType, SVGProps } from 'react';
 
@@ -45,6 +47,7 @@ export type NavigationSection =
   | 'search'
   | 'employee'
   | 'ppe'
+  | 'ai'
   | 'admin';
 
 export type IconComponent = ComponentType<SVGProps<SVGSVGElement> & { className?: string }>;
@@ -113,6 +116,7 @@ export const mainNavItems: MainNavItem[] = [
   { name: 'Search', href: '/search', section: 'search', icon: MagnifyingGlassIcon },
   { name: 'Employee', href: '/employee-management', section: 'employee', icon: UserGroupIcon },
   { name: 'PPE', href: '/ppe-dashboard', section: 'ppe', icon: ShieldCheckIcon },
+  { name: 'AI Agent', href: '/ai-agent', section: 'ai', icon: SparklesIcon },
   { name: 'Admin', href: '/admin/projects', section: 'admin', icon: Cog6ToothIcon, requiresAuth: true },
 ];
 
@@ -124,6 +128,7 @@ export const subLinksMap: Record<NavigationSection, SidebarSubLink[]> = {
     { name: 'Project Equipment', href: '/reports/project-equipment', icon: BuildingLibraryIcon },
     { name: 'User Equipment', href: '/reports/user-equipment', icon: UserIcon },
     { name: 'Warehouse Equipment', href: '/reports/warehouse-equipment', icon: ArchiveBoxIcon },
+    { name: 'Comprehensive Export', href: '/reports/asset-mme-export', icon: DocumentArrowDownIcon },
   ]),
   mme: withIconPalette([
     { name: 'MME Overview', href: '/mme', icon: BeakerIcon },
@@ -201,6 +206,10 @@ export const subLinksMap: Record<NavigationSection, SidebarSubLink[]> = {
     { name: 'Due for Reissue', href: '/ppe-due-for-reissue', icon: ExclamationTriangleIcon },
     { name: 'Issues (Date Range)', href: '/ppe-issues', icon: ClipboardDocumentIcon },
     { name: 'Issues by Employee', href: '/ppe-issues-employee', icon: UserIcon },
+    { name: 'PPE Reports & Export', href: '/ppe-reports', icon: DocumentArrowDownIcon },
+  ]),
+  ai: withIconPalette([
+    { name: 'AI Natural Language Query', href: '/ai-agent', icon: SparklesIcon },
   ]),
   admin: withIconPalette([
     { name: 'Projects', href: '/admin/projects', icon: CubeIcon },
@@ -220,6 +229,7 @@ export const sectionLabels: Record<NavigationSection, string> = {
   search: 'Search',
   employee: 'Employee',
   ppe: 'PPE',
+  ai: 'AI Agent',
   admin: 'Admin',
 };
 
@@ -248,6 +258,7 @@ export function getSectionFromPathname(pathname: string | null): NavigationSecti
   if (pathname.startsWith('/search')) return 'search';
   if (pathname.startsWith('/employee-management')) return 'employee';
   if (pathname.startsWith('/ppe-') || pathname === '/ppe-dashboard') return 'ppe';
+  if (pathname.startsWith('/ai-agent')) return 'ai';
   if (pathname.startsWith('/admin')) return 'admin';
 
   return null;
