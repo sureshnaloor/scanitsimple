@@ -51,6 +51,16 @@ function NewCustodyForm() {
   const [locationCitiesLoaded, setLocationCitiesLoaded] = useState(false);
   const bulkFileInputRef = useRef<HTMLInputElement>(null);
 
+  // User fields state
+  const [userType, setUserType] = useState<'employee' | 'non_employee'>('employee');
+  const [userEmpNo, setUserEmpNo] = useState('');
+  const [userName, setUserName] = useState('');
+  const [userNationalId, setUserNationalId] = useState('');
+  const [userSerialNumber, setUserSerialNumber] = useState('');
+  const [userPassportNumber, setUserPassportNumber] = useState('');
+  const [userAddress, setUserAddress] = useState('');
+  const [nonUserId, setNonUserId] = useState('');
+
   const [formData, setFormData] = useState<Partial<Custody>>({
     assetnumber: params.assetnumber,
     custodyfrom: new Date(),
@@ -180,6 +190,23 @@ function NewCustodyForm() {
     }
   };
 
+  const loadNonUserOptions = async (inputValue: string) => {
+    try {
+      const url = `/api/non-users/search?q=${encodeURIComponent(inputValue)}`;
+      const response = await fetch(url);
+      const responseData = await response.json();
+      if (!response.ok || !responseData.success) return [];
+      const records = responseData.data?.records || [];
+      return records.map((item: any) => ({
+        value: item._id,
+        label: `${item.fullName}${item.nationalId ? ` (Nat ID: ${item.nationalId})` : ''}${item.serialNumber ? ` (SN: ${item.serialNumber})` : ''}${item.category ? ` - ${item.category}` : ''}`,
+        nonUser: item,
+      }));
+    } catch (e) {
+      return [];
+    }
+  };
+
   const handleLocationTypeChange = (t: CustodyLocationType) => {
     setLocationType(t);
     const list = t === 'warehouse' ? warehouseCityNames : departmentCityNames;
@@ -231,6 +258,14 @@ function NewCustodyForm() {
           assetnumber: params.assetnumber,
           employeenumber: formData.employeenumber,
           employeename: formData.employeename,
+          userType,
+          userEmpNo: userType === 'employee' ? (userEmpNo || formData.employeenumber || null) : null,
+          userName: userName.trim() || formData.employeename || null,
+          userNationalId: userType === 'non_employee' ? (userNationalId.trim() || null) : null,
+          userSerialNumber: userType === 'non_employee' ? (userSerialNumber.trim() || null) : null,
+          userPassportNumber: userType === 'non_employee' ? (userPassportNumber.trim() || null) : null,
+          userAddress: userType === 'non_employee' ? (userAddress.trim() || null) : null,
+          nonUserId: userType === 'non_employee' ? (nonUserId || null) : null,
           locationType,
           custodyCity: custodyCity.trim() || null,
           premisesId: locationType === 'project_site' ? null : premisesId || null,
@@ -367,7 +402,9 @@ function NewCustodyForm() {
 
             <div className="space-y-6">
               <div>
-                <label className={`mb-1 block text-sm font-medium ${fap.textPrimary}`}>Employee Number</label>
+                <label className={`mb-1 block text-sm font-semibold ${fap.textPrimary}`}>
+                  Custodian (Employee) <span className="text-red-500">*</span>
+                </label>
                 <AsyncSelect
                   loadOptions={loadEmployeeOptions}
                   defaultOptions={false}
@@ -379,13 +416,129 @@ function NewCustodyForm() {
                         employeenumber: option.value,
                         employeename: option.employee.empname,
                       }));
+                      // If user not explicitly set, auto prefill user if employee
+                      if (!userName && userType === 'employee') {
+                        setUserEmpNo(option.value);
+                        setUserName(option.employee.empname);
+                      }
                     }
                   }}
                   styles={asyncSelectStyles}
                   className="text-sm"
-                  placeholder="Search by employee number or name..."
+                  placeholder="Search custodian by employee number or name..."
                   isClearable
                 />
+              </div>
+
+              {/* User Field Section */}
+              <div className="rounded-lg border border-cyan-500/20 bg-slate-900/40 p-4 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-700/50 pb-2">
+                  <label className={`block text-sm font-semibold ${fap.textPrimary}`}>
+                    Actual User of Asset / Equipment
+                  </label>
+                  <div className="flex items-center gap-4 text-xs font-medium">
+                    <label className="flex items-center gap-1.5 cursor-pointer text-slate-300 hover:text-cyan-400">
+                      <input
+                        type="radio"
+                        name="userType"
+                        value="employee"
+                        checked={userType === 'employee'}
+                        onChange={() => {
+                          setUserType('employee');
+                          setUserName('');
+                          setUserEmpNo('');
+                          setUserNationalId('');
+                          setUserSerialNumber('');
+                          setUserPassportNumber('');
+                          setUserAddress('');
+                          setNonUserId('');
+                        }}
+                        className="text-cyan-500 focus:ring-cyan-500"
+                      />
+                      <span>Internal Employee</span>
+                    </label>
+                    <label className="flex items-center gap-1.5 cursor-pointer text-slate-300 hover:text-cyan-400">
+                      <input
+                        type="radio"
+                        name="userType"
+                        value="non_employee"
+                        checked={userType === 'non_employee'}
+                        onChange={() => {
+                          setUserType('non_employee');
+                          setUserName('');
+                          setUserEmpNo('');
+                          setUserNationalId('');
+                          setUserSerialNumber('');
+                          setUserPassportNumber('');
+                          setUserAddress('');
+                          setNonUserId('');
+                        }}
+                        className="text-cyan-500 focus:ring-cyan-500"
+                      />
+                      <span>External (Non-Employee)</span>
+                    </label>
+                  </div>
+                </div>
+
+                {userType === 'employee' ? (
+                  <div>
+                    <AsyncSelect
+                      loadOptions={loadEmployeeOptions}
+                      defaultOptions={false}
+                      cacheOptions
+                      onChange={(option: { value: string; label: string; employee: Employee } | null) => {
+                        if (option) {
+                          setUserEmpNo(option.value);
+                          setUserName(option.employee.empname);
+                        } else {
+                          setUserEmpNo('');
+                          setUserName('');
+                        }
+                      }}
+                      styles={asyncSelectStyles}
+                      className="text-sm"
+                      placeholder="Search employee user by number or name..."
+                      isClearable
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <AsyncSelect
+                      loadOptions={loadNonUserOptions}
+                      defaultOptions={false}
+                      cacheOptions
+                      onChange={(option: { value: string; label: string; nonUser: any } | null) => {
+                        if (option) {
+                          setNonUserId(option.value);
+                          setUserName(option.nonUser.fullName);
+                          setUserNationalId(option.nonUser.nationalId || '');
+                          setUserSerialNumber(option.nonUser.serialNumber || '');
+                          setUserPassportNumber(option.nonUser.passportNumber || '');
+                          setUserAddress(option.nonUser.address || '');
+                        } else {
+                          setNonUserId('');
+                          setUserName('');
+                          setUserNationalId('');
+                          setUserSerialNumber('');
+                          setUserPassportNumber('');
+                          setUserAddress('');
+                        }
+                      }}
+                      styles={asyncSelectStyles}
+                      className="text-sm"
+                      placeholder="Search non-user by name, National ID, serial no, or passport..."
+                      isClearable
+                    />
+                    {userName && (
+                      <div className="text-xs p-2.5 rounded bg-cyan-950/40 border border-cyan-800/50 text-cyan-200 flex flex-wrap gap-x-4 gap-y-1">
+                        <div><span className="font-semibold text-cyan-400">User:</span> {userName}</div>
+                        {userNationalId && <div><span className="font-semibold text-cyan-400">National ID:</span> {userNationalId}</div>}
+                        {userSerialNumber && <div><span className="font-semibold text-cyan-400">Serial No:</span> {userSerialNumber}</div>}
+                        {userPassportNumber && <div><span className="font-semibold text-cyan-400">Passport:</span> {userPassportNumber}</div>}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <CustodyLocationFields

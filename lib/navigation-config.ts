@@ -191,6 +191,7 @@ export const subLinksMap: Record<NavigationSection, SidebarSubLink[]> = {
   ]),
   employee: withIconPalette([
     { name: 'Employee Management', href: '/employee-management', icon: UserGroupIcon },
+    { name: 'Non-User Master', href: '/non-user-management', icon: UserIcon },
     { name: 'Assets in User Custody', href: '#', icon: BuildingOfficeIcon },
     { name: 'MME in User Custody', href: '#', icon: BeakerIcon },
     { name: 'Tools in User Custody', href: '#', icon: WrenchScrewdriverIcon },
@@ -256,7 +257,7 @@ export function getSectionFromPathname(pathname: string | null): NavigationSecti
     return 'materials';
   }
   if (pathname.startsWith('/search')) return 'search';
-  if (pathname.startsWith('/employee-management')) return 'employee';
+  if (pathname.startsWith('/employee-management') || pathname.startsWith('/non-user-management')) return 'employee';
   if (pathname.startsWith('/ppe-') || pathname === '/ppe-dashboard') return 'ppe';
   if (pathname.startsWith('/ai-agent')) return 'ai';
   if (pathname.startsWith('/admin')) return 'admin';

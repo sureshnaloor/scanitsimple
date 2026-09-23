@@ -37,6 +37,13 @@ export async function GET() {
       'custodyfrom*',
       'custodyto',
       'documentnumber',
+      'userType',
+      'userName',
+      'userEmpNo',
+      'userNationalId',
+      'userSerialNumber',
+      'userPassportNumber',
+      'userAddress',
     ];
 
     const sampleRow = [

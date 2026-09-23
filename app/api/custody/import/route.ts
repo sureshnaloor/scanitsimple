@@ -56,6 +56,21 @@ const HEADER_MAPPING: HeaderMap = {
   'custody to': 'custodyto',
   documentnumber: 'documentnumber',
   'document number': 'documentnumber',
+  usertype: 'userType',
+  'user type': 'userType',
+  username: 'userName',
+  'user name': 'userName',
+  userempno: 'userEmpNo',
+  'user emp no': 'userEmpNo',
+  'user employee number': 'userEmpNo',
+  usernationalid: 'userNationalId',
+  'user national id': 'userNationalId',
+  userserialnumber: 'userSerialNumber',
+  'user serial number': 'userSerialNumber',
+  userpassportnumber: 'userPassportNumber',
+  'user passport number': 'userPassportNumber',
+  useraddress: 'userAddress',
+  'user address': 'userAddress',
 };
 
 const OPTIONAL_STRING_FIELDS = [
@@ -77,6 +92,13 @@ const OPTIONAL_STRING_FIELDS = [
   'project',
   'projectname',
   'documentnumber',
+  'userType',
+  'userName',
+  'userEmpNo',
+  'userNationalId',
+  'userSerialNumber',
+  'userPassportNumber',
+  'userAddress',
 ] as const;
 
 function normalizeHeader(header: unknown): string {

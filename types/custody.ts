@@ -37,6 +37,16 @@ export interface Custody {
   createdby: string;
   custodyfrom: Date;
   custodyto?: Date | null;
+  /** Actual user of asset/equipment (Employee or Non-Employee) */
+  userType?: 'employee' | 'non_employee';
+  userEmpNo?: string;
+  userName?: string;
+  userNationalId?: string;
+  userSerialNumber?: string;
+  userPassportNumber?: string;
+  userAddress?: string;
+  userCategory?: string;
+  nonUserId?: string;
 }
 
 export interface CustodyRecord extends Custody {
