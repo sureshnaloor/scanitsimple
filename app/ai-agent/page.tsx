@@ -147,6 +147,8 @@ export default function AIAgentPage() {
   const [promptInput, setPromptInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isAgentBusy, setIsAgentBusy] = useState(false);
+  const [lastAttemptedPrompt, setLastAttemptedPrompt] = useState('');
   const [currentStep, setCurrentStep] = useState<1 | 2 | null>(null);
   const [activeTab, setActiveTab] = useState<'summary' | 'table' | 'chart' | 'audit'>('summary');
   const [queryResult, setQueryResult] = useState<QueryResult | null>(null);
@@ -304,6 +306,7 @@ export default function AIAgentPage() {
   const handleClearQuery = () => {
     setQueryResult(null);
     setErrorMessage(null);
+    setIsAgentBusy(false);
     setTableSearch('');
     setTablePage(1);
   };
@@ -315,9 +318,12 @@ export default function AIAgentPage() {
       return;
     }
 
+    setLastAttemptedPrompt(text);
+
     try {
       setLoading(true);
       setErrorMessage(null);
+      setIsAgentBusy(false);
       setCurrentStep(1);
 
       // Step 1 Simulation progress state
@@ -333,36 +339,44 @@ export default function AIAgentPage() {
 
       clearTimeout(stepTimer);
 
-      if (!res.ok) {
-        const rawText = await res.text();
-        if (
-          res.status === 504 ||
-          rawText.includes('FUNCTION_INVOCATION_TIMEOUT') ||
-          rawText.includes('504 Gateway Time-out') ||
-          rawText.includes('timeout')
-        ) {
-          throw new Error('Query timed out on the server (Vercel timeout). Please try a more specific question or retry.');
-        }
-        try {
-          const errJson = JSON.parse(rawText);
-          throw new Error(errJson.error || `Server error (${res.status})`);
-        } catch (e: any) {
-          if (e.message && !e.message.startsWith('Unexpected') && !e.message.startsWith('JSON') && !e.message.includes('pattern')) {
-            throw e;
-          }
-          throw new Error(`Server returned an error (${res.status}). Please retry.`);
-        }
-      }
-
-      let json: any;
+      let json: any = null;
       try {
         json = await res.json();
-      } catch (jsonErr) {
-        throw new Error('Could not parse response from server. Please retry.');
+      } catch {
+        // Non-JSON response (e.g. timeout or network error)
       }
 
-      if (!json.success || !json.data) {
-        throw new Error(json.error || 'Failed to process AI query');
+      if (!res.ok || !json?.success) {
+        const errorText = String(json?.error || '').toLowerCase();
+        const isBusy =
+          Boolean(json?.isAgentBusy) ||
+          res.status === 503 ||
+          res.status === 502 ||
+          res.status === 504 ||
+          res.status === 401 ||
+          res.status === 402 ||
+          res.status === 429 ||
+          errorText.includes('busy') ||
+          errorText.includes('api key') ||
+          errorText.includes('deepseek') ||
+          errorText.includes('openai') ||
+          errorText.includes('balance') ||
+          errorText.includes('quota') ||
+          errorText.includes('timeout') ||
+          errorText.includes('timed out');
+
+        if (isBusy) {
+          setIsAgentBusy(true);
+          setErrorMessage(null);
+          show({
+            title: 'AI Agent is Busy',
+            description: 'The AI agent is currently busy. Please try again after some time.',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        throw new Error(json?.error || `Server error (${res.status}). Please retry.`);
       }
 
       const result: QueryResult = {
@@ -392,13 +406,36 @@ export default function AIAgentPage() {
       });
     } catch (err: any) {
       console.error('AI Query Error:', err);
-      const cleanMsg = err.message || 'Could not execute AI query';
-      setErrorMessage(cleanMsg);
-      show({
-        title: 'Query Failed',
-        description: cleanMsg.length > 180 ? `${cleanMsg.slice(0, 180)}...` : cleanMsg,
-        variant: 'destructive',
-      });
+      const rawMsg = String(err?.message || '');
+      const lower = rawMsg.toLowerCase();
+      const isBusy =
+        lower.includes('busy') ||
+        lower.includes('api key') ||
+        lower.includes('deepseek') ||
+        lower.includes('openai') ||
+        lower.includes('balance') ||
+        lower.includes('quota') ||
+        lower.includes('timeout') ||
+        lower.includes('timed out') ||
+        lower.includes('failed to fetch');
+
+      if (isBusy) {
+        setIsAgentBusy(true);
+        setErrorMessage(null);
+        show({
+          title: 'AI Agent is Busy',
+          description: 'The AI agent is currently busy. Please try again after some time.',
+          variant: 'destructive',
+        });
+      } else {
+        const cleanMsg = rawMsg.length > 180 ? `${rawMsg.slice(0, 180)}...` : rawMsg || 'Could not execute query';
+        setErrorMessage(cleanMsg);
+        show({
+          title: 'Query Failed',
+          description: cleanMsg,
+          variant: 'destructive',
+        });
+      }
     } finally {
       setLoading(false);
       setCurrentStep(null);
@@ -852,8 +889,85 @@ export default function AIAgentPage() {
           </div>
         </div>
 
-        {/* Error Alert Notice */}
-        {errorMessage && (
+        {/* AI Agent Busy Screen / Service Notice */}
+        {isAgentBusy && (
+          <div
+            className={`mb-8 p-6 sm:p-7 rounded-3xl border backdrop-blur-xl shadow-2xl transition-all duration-300 animate-in fade-in slide-in-from-top-3 ${
+              theme === 'light'
+                ? 'bg-gradient-to-br from-amber-50/90 via-sky-50/80 to-blue-50/90 border-blue-200 text-slate-800 shadow-blue-100/50'
+                : theme === 'glassmorphic'
+                ? 'bg-gradient-to-br from-white/15 via-white/10 to-teal-500/10 border-white/20 text-white shadow-teal-950/40'
+                : 'bg-gradient-to-br from-slate-900/95 via-slate-800/90 to-amber-950/20 border-slate-700/80 text-slate-100 shadow-black/40'
+            }`}
+          >
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+              <div className="flex items-start gap-4">
+                <div
+                  className={`p-3 rounded-2xl shrink-0 flex items-center justify-center ${
+                    theme === 'light'
+                      ? 'bg-blue-100/90 text-blue-700 border border-blue-200'
+                      : 'bg-teal-500/20 text-teal-300 border border-teal-400/30'
+                  }`}
+                >
+                  <CpuChipIcon className="w-8 h-8 animate-pulse" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2.5 flex-wrap">
+                    <h3 className={`text-base sm:text-lg font-bold tracking-tight ${styles.textHeading}`}>
+                      AI Agent is Currently Busy
+                    </h3>
+                    <Badge variant="default" className={styles.badgeWarning}>
+                      <ClockIcon className="w-3.5 h-3.5 mr-1" />
+                      Please Try Again Shortly
+                    </Badge>
+                  </div>
+                  <p className={`text-sm leading-relaxed max-w-2xl ${styles.textBody}`}>
+                    The AI agent is currently busy and unable to process queries right now. Please try again after some time. If this issue persists, please contact your administrator.
+                  </p>
+                  {lastAttemptedPrompt && (
+                    <p className={`text-xs italic pt-1 ${styles.subtext}`}>
+                      Attempted question: &ldquo;{lastAttemptedPrompt.length > 90 ? `${lastAttemptedPrompt.slice(0, 90)}...` : lastAttemptedPrompt}&rdquo;
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end shrink-0">
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => {
+                    setIsAgentBusy(false);
+                    setErrorMessage(null);
+                    const promptToRetry = lastAttemptedPrompt || promptInput;
+                    if (promptToRetry.trim()) {
+                      handleRunQuery(promptToRetry);
+                    }
+                  }}
+                  className={`h-9 px-4 text-xs font-semibold rounded-xl flex items-center gap-2 ${styles.buttonPrimary}`}
+                >
+                  <ArrowPathIcon className="w-4 h-4" />
+                  <span>Try Again</span>
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setIsAgentBusy(false);
+                    setErrorMessage(null);
+                  }}
+                  className={`h-9 px-3.5 text-xs font-medium rounded-xl ${styles.buttonSecondary}`}
+                >
+                  <span>Dismiss</span>
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* General Error Alert Notice (for non-busy errors) */}
+        {errorMessage && !isAgentBusy && (
           <div className="mb-6 p-4 rounded-2xl bg-red-500/15 border border-red-500/40 text-red-100 flex items-start justify-between gap-4 backdrop-blur-md shadow-lg">
             <div className="flex items-start gap-3">
               <ExclamationTriangleIcon className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
@@ -868,7 +982,8 @@ export default function AIAgentPage() {
                 size="sm"
                 onClick={() => {
                   setErrorMessage(null);
-                  if (promptInput.trim()) handleRunQuery(promptInput);
+                  const p = lastAttemptedPrompt || promptInput;
+                  if (p.trim()) handleRunQuery(p);
                 }}
                 className="h-7 px-3 text-xs bg-red-600 hover:bg-red-500 text-white rounded-xl shadow-sm"
               >

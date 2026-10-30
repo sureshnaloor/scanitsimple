@@ -222,11 +222,17 @@ function NonUserManagementContent() {
   });
 
   return (
-    <ThemedPageShell
-      title="Non-User Master (Non-Employees)"
-      description="Manage non-employee users such as visitors, rental employees, clients, and contractors who use assets or equipment."
-    >
+    <ThemedPageShell>
       <div className="space-y-6">
+        {/* Page Header */}
+        <div>
+          <h1 className={`text-2xl font-bold ${isLight ? 'text-slate-800' : 'text-white'}`}>
+            Non-User Master (Non-Employees)
+          </h1>
+          <p className={`mt-1 text-sm ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+            Manage non-employee users such as visitors, rental employees, clients, and contractors who use assets or equipment.
+          </p>
+        </div>
         {/* Navigation Tabs */}
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-700/50 pb-3">
           <div className="flex gap-2">

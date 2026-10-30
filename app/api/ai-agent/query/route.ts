@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth';
-import { callDeepSeekChat } from '@/lib/ai/deepseek-client';
+import { callDeepSeekChat, AiServiceError } from '@/lib/ai/deepseek-client';
 import {
   DATABASE_SCHEMA_PROMPT,
   SafeQueryPlan,
@@ -352,11 +352,38 @@ ${JSON.stringify(sampleRawData, null, 2)}
       },
     });
   } catch (error: any) {
-    console.error('Error in AI Agent Query Route:', error);
+    console.error('[AI Agent Query Error]:', error);
+
+    const isAiError =
+      error instanceof AiServiceError ||
+      error.isAgentBusy ||
+      (typeof error.message === 'string' &&
+        (error.message.includes('API key') ||
+          error.message.includes('DeepSeek') ||
+          error.message.includes('OpenAI') ||
+          error.message.includes('balance') ||
+          error.message.includes('401') ||
+          error.message.includes('402') ||
+          error.message.includes('429') ||
+          error.message.includes('503')));
+
+    if (isAiError) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'The AI agent is currently busy. Please try again after some time. If the issue persists, please contact your administrator.',
+          isAgentBusy: true,
+          code: error.code || 'AI_AGENT_BUSY',
+        },
+        { status: error.status || 503 }
+      );
+    }
+
     return NextResponse.json(
       {
         success: false,
         error: error.message || 'An error occurred while processing the AI query.',
+        isAgentBusy: false,
       },
       { status: 500 }
     );
