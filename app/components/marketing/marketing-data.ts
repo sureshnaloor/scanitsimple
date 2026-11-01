@@ -129,8 +129,10 @@ export const clientLogos = ['Acme Corp', 'GlobalTech', 'InduMax', 'BuildRight', 
 
 export const navLinks = [
   { href: '/', label: 'Home' },
-  { href: '/features', label: 'Features' },
-  { href: '/pricing', label: 'Pricing' },
+  { href: '/#how-it-works', label: 'How It Works' },
+  { href: '/#features', label: 'Features' },
+  { href: '/#showcase', label: 'Showcase' },
+  { href: '/#pricing', label: 'Pricing' },
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/contact', label: 'Contact' },
 ];

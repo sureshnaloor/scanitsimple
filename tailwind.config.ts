@@ -64,6 +64,19 @@ const config: Config = {
   			success: '#10B981',
   			warning: '#F59E0B',
   			error: '#EF4444',
+  			'epc-primary': '#074E84',
+  			'epc-secondary': '#2380C6',
+  			gold: '#FCBC45',
+  			golddeep: '#E8A020',
+  			ink: '#05052D',
+  			navy: '#0A1B33',
+  			body: '#505E6B',
+  			mist: '#F6F4FF',
+  			line: '#E7E3F5',
+  		},
+  		fontFamily: {
+  			display: ['var(--font-heebo)', 'Heebo', 'sans-serif'],
+  			body: ['var(--font-inter)', 'Inter', 'sans-serif'],
   		},
   		borderRadius: {
   			lg: 'var(--radius)',
@@ -79,6 +92,8 @@ const config: Config = {
   			'ds-sm': '0 1px 2px rgba(0,0,0,0.3)',
   			'ds-md': '0 4px 6px -1px rgba(0,0,0,0.4), 0 2px 4px -2px rgba(0,0,0,0.3)',
   			'ds-lg': '0 10px 15px -3px rgba(0,0,0,0.5), 0 4px 6px -4px rgba(0,0,0,0.3)',
+  			card: '0 10px 40px -12px rgba(7, 78, 132, 0.18)',
+  			cardhover: '0 24px 60px -16px rgba(7, 78, 132, 0.32)',
   		},
   		fontSize: {
   			hero: ['64px', { lineHeight: '1.1', letterSpacing: '-0.02em', fontWeight: '800' }],

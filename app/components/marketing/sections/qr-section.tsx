@@ -1,98 +1,60 @@
 'use client';
 
 import Link from 'next/link';
-import { Zap, Palette, GitBranch } from 'lucide-react';
-import { motion, useScroll, useTransform } from 'framer-motion';
-import { useRef } from 'react';
+import { ArrowRight, Check } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { SectionHeader } from '../section-header';
 import { QrDemo } from '../qr-demo';
-import { FadeUp } from '../fade-up';
-import { MagneticButton } from '@/app/components/effects/magnetic-button';
-import { Button } from '@/components/ui/button';
-
-const icons = { Zap, Palette, GitBranch };
 
 const features = [
-  { icon: 'Zap', text: 'Batch QR generation' },
-  { icon: 'Palette', text: 'Custom branded codes' },
-  { icon: 'GitBranch', text: 'Seamless workflow integration' },
+  'Batch QR generation directly from the asset register',
+  'Custom branded labels with company logo & asset code',
+  'Instant smartphone scan — zero app installs required',
+  'Role-aware record routing for operators, logistics & auditors',
 ];
 
+const reveal = {
+  initial: { opacity: 0, y: 36 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, margin: '-80px' },
+  transition: { duration: 0.7, ease: [0.2, 0.8, 0.2, 1] as const },
+};
+
 export function QrSection() {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ['start end', 'end start'],
-  });
-
-  const rotateY = useTransform(scrollYProgress, [0, 1], [-15, 15]);
-
   return (
-    <section
-      id="demo"
-      ref={sectionRef}
-      className="relative overflow-hidden bg-primary-navy py-24"
-    >
-      {/* decorative accent glows */}
-      <div
-        className="pointer-events-none absolute -left-32 top-1/4 size-[420px] rounded-full blur-[120px]"
-        style={{ background: 'radial-gradient(circle, var(--color-accent-teal-glow) 0%, transparent 70%)' }}
-      />
-      <div
-        className="pointer-events-none absolute -right-32 bottom-1/4 size-[380px] rounded-full blur-[120px]"
-        style={{ background: 'radial-gradient(circle, var(--color-accent-orange-glow) 0%, transparent 70%)' }}
-      />
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section id="demo" className="scroll-mt-24 relative overflow-hidden bg-white py-24">
+      <div className="relative mx-auto max-w-7xl px-6">
         <div className="grid grid-cols-1 items-center gap-16 lg:grid-cols-2">
-          <FadeUp>
+          <motion.div {...reveal}>
             <SectionHeader
-              label="Instant Access"
+              label="Instant Access · Try It Live"
               headline="Scan Any Asset. Get Everything."
-              subheadline="Every asset gets a unique QR code that provides instant access to its complete information profile. Simply scan with any smartphone to view location, custodian, maintenance history, and more."
+              subheadline="Every asset gets a unique QR code that provides instant access to its complete information profile. Simply scan with any smartphone to view location, custodian, calibration history, and more."
               align="left"
-              className="mb-8 !text-left !mx-0"
+              className="mb-8"
             />
-            <ul className="mb-8 space-y-4">
-              {features.map(({ icon, text }, i) => {
-                const Icon = icons[icon as keyof typeof icons];
-                return (
-                  <motion.li
-                    key={text}
-                    className="flex items-center gap-3 text-body-ds"
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: 0.1 * i, duration: 0.5 }}
-                  >
-                    <motion.div
-                      className="flex size-10 items-center justify-center rounded-full bg-accent-teal/15"
-                      whileHover={{ scale: 1.1, backgroundColor: 'rgba(0,180,216,0.25)' }}
-                    >
-                      <Icon className="size-5 text-accent-teal" />
-                    </motion.div>
-                    {text}
-                  </motion.li>
-                );
-              })}
+            <ul className="mb-9 space-y-3.5">
+              {features.map((text) => (
+                <li key={text} className="check-item">
+                  <span className="check-badge">
+                    <Check size={11} strokeWidth={3.5} className="text-golddeep" />
+                  </span>
+                  <span className="text-sm text-navy">{text}</span>
+                </li>
+              ))}
             </ul>
-            <MagneticButton>
-              <Button variant="cta-secondary" asChild>
-                <Link href="/dashboard">Try QR Generator</Link>
-              </Button>
-            </MagneticButton>
-          </FadeUp>
+            <Link href="/dashboard" className="btn-primary">
+              Open QR Studio in Dashboard <ArrowRight size={17} />
+            </Link>
+          </motion.div>
 
-          <FadeUp delay={0.2}>
-            <motion.div
-              style={{ rotateY, perspective: 800 }}
-              className="relative"
-            >
-              <div className="relative overflow-hidden rounded-2xl">
-                <QrDemo />
-                <div className="scan-line pointer-events-none" />
-              </div>
-            </motion.div>
-          </FadeUp>
+          <motion.div {...reveal} transition={{ ...reveal.transition, delay: 0.15 }}>
+            <div className="relative mx-auto max-w-md">
+              <div className="absolute -left-5 -top-5 hidden h-28 w-28 border-8 border-gold/70 sm:block" />
+              <div className="absolute -bottom-5 -right-5 hidden h-24 w-24 border-8 border-epc-primary/80 sm:block" />
+              <QrDemo className="relative z-10" />
+            </div>
+          </motion.div>
         </div>
       </div>
     </section>

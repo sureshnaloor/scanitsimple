@@ -3,7 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import 'react-datepicker/dist/react-datepicker.css';
 import { Providers } from './providers';
-import { Inter } from 'next/font/google';
+import { Inter, Heebo } from 'next/font/google';
 import LayoutWrapper from './components/LayoutWrapper';
 import ConditionalLayout from './components/ConditionalLayout';
 import AuthProvider from './providers/AuthProvider';
@@ -21,11 +21,16 @@ const geistMono = localFont({
   weight: "100 900",
 });
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+const heebo = Heebo({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800', '900'],
+  variable: '--font-heebo',
+});
 
 export const metadata: Metadata = {
-  title: "scanitsimple",
-  description: "Every Asset. One Scan. Total Control. Enterprise-grade asset and equipment tagging for modern operations.",
+  title: "SmartTagScan — EPCORA Stack | Asset Intelligence",
+  description: "Every Asset. One Scan. Total Control. Enterprise-grade asset and equipment tagging for modern construction & EPC operations.",
 };
 
 export default function RootLayout({
@@ -36,7 +41,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head />
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased ${inter.className}`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} ${heebo.variable} antialiased ${inter.className}`}>
         <Providers>
           <AuthProvider>
             <div className="min-h-screen flex flex-col">

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
+import { ScanLine } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface QrDemoProps {
@@ -9,38 +10,58 @@ interface QrDemoProps {
   className?: string;
 }
 
-export function QrDemo({ defaultValue = 'SMART-ASSET-DEMO', className }: QrDemoProps) {
+export function QrDemo({ defaultValue = 'MME-2041-CAT320', className }: QrDemoProps) {
   const [qrText, setQrText] = useState(defaultValue);
-  const [hovered, setHovered] = useState(false);
 
   return (
-    <div className={cn('glass-card p-8 text-center', className)}>
-      <h3 className="text-h4 mb-6">Live QR Code Demo</h3>
-      <div
-        className={cn(
-          'mx-auto mb-4 flex size-[200px] items-center justify-center rounded-lg bg-white p-4 transition-all duration-300',
-          hovered && 'border-2 border-accent-teal shadow-glow-teal'
-        )}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-      >
-        <QRCodeSVG value={qrText} size={168} />
+    <div
+      className={cn(
+        'service-card border border-line bg-white p-8 text-center shadow-cardhover',
+        className
+      )}
+    >
+      <div className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.25em] text-epc-secondary">
+        <span>Interactive QR Studio</span>
+        <span className="flex items-center gap-1 text-golddeep">
+          <ScanLine size={12} /> Live Preview
+        </span>
       </div>
-      <p className="font-mono text-caption text-text-muted mb-6">
-        QR Code for: {qrText}
+      <h3 className="mb-6 font-display text-xl font-bold text-epc-primary">
+        Generate Any Asset Tag
+      </h3>
+
+      <div className="relative mx-auto mb-5 flex size-[210px] items-center justify-center bg-mist p-5">
+        {/* Corner brackets */}
+        {[
+          'left-0 top-0 border-l-4 border-t-4',
+          'right-0 top-0 border-r-4 border-t-4',
+          'bottom-0 left-0 border-b-4 border-l-4',
+          'bottom-0 right-0 border-b-4 border-r-4',
+        ].map((pos, i) => (
+          <span key={i} className={`absolute h-6 w-6 border-gold ${pos}`} />
+        ))}
+        <div className="bg-white p-3 shadow-sm">
+          <QRCodeSVG value={qrText || defaultValue} size={156} fgColor="#05052D" />
+        </div>
+        <span className="scanline pointer-events-none absolute left-2 right-2 h-0.5 bg-gold shadow-[0_0_12px_rgba(252,188,69,0.9)]" />
+      </div>
+
+      <p className="mb-6 font-mono text-xs font-semibold uppercase tracking-wider text-navy">
+        Asset Tag ID: <span className="text-epc-secondary">{qrText || defaultValue}</span>
       </p>
-      <div className="flex gap-3">
+
+      <div className="flex flex-col gap-3 sm:flex-row">
         <input
           type="text"
           value={qrText}
           onChange={(e) => setQrText(e.target.value)}
-          placeholder="Enter asset ID..."
-          className="flex-1 rounded-md border border-primary-light bg-primary-slate px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:border-accent-teal focus:outline-none focus:shadow-glow-teal"
+          placeholder="Enter asset ID (e.g. MME-2041)..."
+          className="flex-1 border border-line bg-mist px-4 py-3 text-sm font-medium text-navy placeholder:text-body/50 focus:border-epc-secondary focus:bg-white focus:outline-none"
         />
         <button
           type="button"
           onClick={() => setQrText(qrText || defaultValue)}
-          className="rounded-full bg-cta-gradient px-6 py-3 text-sm font-semibold text-white shadow-glow-orange transition-all hover:-translate-y-0.5"
+          className="btn-gold justify-center !px-6 !py-3 text-xs"
         >
           Generate
         </button>

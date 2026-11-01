@@ -672,3 +672,189 @@ body {
 .react-datepicker__portal {
   z-index: 9999 !important;
 }
+
+/* ─── EPCORA Stack Marketing Design System Classes ─── */
+@layer components {
+  .eyebrow {
+    @apply text-xs font-semibold uppercase tracking-[0.35em] text-epc-secondary;
+  }
+  .eyebrow-center {
+    @apply eyebrow text-center;
+  }
+  .bordered-heading {
+    @apply border-l-4 border-epc-secondary pl-5 font-display font-bold text-epc-primary leading-snug;
+  }
+  .btn-primary {
+    @apply inline-flex items-center gap-2.5 bg-epc-primary px-8 py-4 font-display text-sm font-semibold uppercase tracking-wider text-white transition-all duration-300 hover:bg-epc-secondary hover:shadow-cardhover;
+  }
+  .btn-gold {
+    @apply inline-flex items-center gap-2.5 bg-gold px-8 py-4 font-display text-sm font-semibold uppercase tracking-wider text-ink transition-all duration-300 hover:bg-golddeep hover:shadow-cardhover;
+  }
+  .btn-outline {
+    @apply inline-flex items-center gap-2.5 border-2 border-epc-primary px-8 py-4 font-display text-sm font-semibold uppercase tracking-wider text-epc-primary transition-all duration-300 hover:bg-epc-primary hover:text-white;
+  }
+  .service-card {
+    @apply relative bg-white p-8 shadow-card transition-all duration-500 hover:-translate-y-2 hover:shadow-cardhover;
+  }
+  .service-card::before {
+    content: '';
+    @apply absolute inset-x-0 top-0 h-1 origin-left scale-x-0 bg-gold transition-transform duration-500;
+  }
+  .service-card:hover::before {
+    @apply scale-x-100;
+  }
+  .check-item {
+    @apply flex items-center gap-3 text-sm font-medium text-navy;
+  }
+  .check-badge {
+    @apply flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gold/25;
+  }
+  .icon-chip {
+    @apply mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-epc-primary/5 text-epc-primary ring-1 ring-epc-primary/15 transition-all duration-500 group-hover:bg-gold group-hover:text-ink group-hover:ring-gold;
+  }
+}
+
+@keyframes epc-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: epc-marquee 30s linear infinite;
+}
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.8);
+  }
+}
+.pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes float-soft {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+.float-soft {
+  animation: float-soft 6s ease-in-out infinite;
+}
+
+.nav-highlight {
+  position: relative;
+  color: #f59e0b;
+  font-weight: 700;
+  text-shadow:
+    0 1px 0 #b97f10,
+    0 2px 4px rgba(0, 0, 0, 0.15);
+}
+.nav-highlight::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -6px;
+  height: 2px;
+  width: 100%;
+  background: linear-gradient(90deg, #fcbc45, #e8730c);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.35s ease;
+}
+.nav-highlight:hover::after,
+.group:hover .nav-highlight::after {
+  transform: scaleX(1);
+}
+
+.text-3d-gold {
+  color: #fcbc45;
+  text-shadow:
+    0 1px 0 #b97f10,
+    0 2px 0 #a9730e,
+    0 3px 0 #98670c,
+    0 4px 0 #875b0b,
+    0 5px 0 #765009,
+    0 6px 0 #654408,
+    0 7px 16px rgba(0, 0, 0, 0.55);
+}
+
+.mark-floor-shadow {
+  width: 64%;
+  height: 10px;
+  margin: 10px auto 0;
+  border-radius: 9999px;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.5), transparent 70%);
+  filter: blur(2px);
+}
+
+.agentically {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 1.15rem;
+  letter-spacing: 0.45em;
+  margin-top: 2px;
+  background: linear-gradient(90deg, #c99b3f 0%, #fcbc45 30%, #ffedbe 50%, #fcbc45 70%, #c99b3f 100%);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: agentic-shimmer 5s ease-in-out infinite;
+}
+@keyframes agentic-shimmer {
+  0%,
+  100% {
+    background-position: 0% 50%;
+    opacity: 0.85;
+  }
+  50% {
+    background-position: 100% 50%;
+    opacity: 1;
+  }
+}
+
+@keyframes scanline {
+  0%,
+  100% {
+    top: 8%;
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  50% {
+    top: 88%;
+  }
+  88% {
+    opacity: 1;
+  }
+}
+.scanline {
+  animation: scanline 2.8s ease-in-out infinite;
+}
+
+.bg-denim {
+  background-color: #33517d;
+  background-image:
+    repeating-linear-gradient(63deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(153deg, rgba(4, 16, 38, 0.1) 0 1px, transparent 1px 3px),
+    radial-gradient(ellipse 90% 70% at 50% 0%, rgba(255, 255, 255, 0.07), transparent 65%);
+}
+
